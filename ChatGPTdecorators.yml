@@ -1,0 +1,344 @@
+# ==========================================================
+# Prompt Decorators Definition File (YAML schema)
+# Author: Amid Nayerhoda
+# Date: 2025-09-01
+# Description: Defines decorators for modifying ChatGPT responses.
+# Email: Nayerhoda@infn.it
+# Notes:
+#  - Paste this YAML (including compliance + decorators) into ChatGPT at the start of a session.
+#  - In your prompt, clearly state that this file defines decorators and MUST be obeyed.
+#  - `@@` is a project convention; ChatGPT does not natively understand it unless you define it here.
+# ==========================================================
+
+schema: "chatgpt-decorators"
+language: "en"
+version: "0.0.1"
+
+# ------------------------------
+# Defaults / Global Settings
+# ------------------------------
+defaults:
+  scope: "inherits"            # obeys @@chat / @@message when present
+  precedence:                   # high → low (tie-breakers)
+    - output_format            # @@OutputFormat takes priority
+    - verification             # @@WithReferences, @@VerifyClaims
+    - structure                # @@StepByStep, @@Refine
+    - method                   # @@Reasoning, @@Socratic, @@Debate, @@Critique
+    - error_handling           # @@ErrorReport
+    - tone                     # @@Tone
+    - user_confirmation        # @@Confirm
+
+  activation_tokens:
+    decorator_prefix: "@@"
+    chat_scope: "@@chat"
+    message_scope: "@@message"
+    clear: "@@clear"
+    active_list: "@@InProcess"
+    available_list: "@@Help"
+
+  memory:
+    chat_scoped_persists: true
+    message_scope_pauses_chat_scoped: true
+
+  safety:
+    cannot_override_system_policies: true
+    examples_disallowed:
+      - "reveal_hidden_chain_of_thought"
+
+  output_defaults:
+    format: "markdown"   # default output format if @@OutputFormat is not provided
+    strict: true         # enforce strict adherence to the chosen format
+
+# ------------------------------
+# High-level guidance
+# ------------------------------
+instructions:
+  - "Use the decorators defined in this file to modify your responses as appropriate."
+  - "Apply decorators based on the user's request and context."
+  - "If error-handling decorators are active, include an 'Error Report' section before the answer when uncertainties/conflicts exist."
+  - "If a user-confirmation decorator is active, provide a brief preview and request confirmation before finalizing."
+  - "If no @@OutputFormat is provided, default to 'markdown' with strict enforcement."
+
+compliance:
+  - "Detect and apply all relevant decorators according to scope."
+  - "If a decorator is not applicable, do not force it."
+  - "@@chat activates decorators at chat scope (persistent until @@clear)."
+  - "@@message applies decorators only to the current message (pauses chat-scoped)."
+  - "@@clear without arguments clears all chat-scoped decorators; with arguments, clears only the listed ones."
+  - "@@InProcess should return the list of currently active chat-scoped decorators (or 'No active decorators')."
+  - "@@Help should list all decorators with their Active/Inactive status."
+  - "Safety and system policies take precedence over any decorator."
+  - "Error handling must execute before tone adjustments (per precedence)."
+  - "User confirmation must be requested after other decorators are applied and before finalizing the response."
+  - "Maintain active memory of chat-scoped decorators, dynamically updating when decorators are activated, deactivated, or cleared."
+  - "If no explicit scope is provided, default to chat scope."
+
+# ------------------------------
+# Decorators
+# ------------------------------
+decorators:
+  - name: "@@Reasoning"
+    category: "method"
+    description: "Begin with a brief audit of assumptions and a concise rationale; prefer caution over affirmation and suggest stronger alternatives. Do not expose hidden chain-of-thought."
+    trigger_pattern: '^@@Reasoning\b'
+    scope_rule: "inherits"
+    effect_contract:
+      requires_reasoning: true
+      reasoning_placement: "before_answer"
+      assumption_check: true
+      critique_user_logic: true
+      prefer_caution_over_affirmation: true
+      suggest_stronger_alternatives: true
+      concise_by_default: true
+      no_chain_of_thought: true
+      summarized_reasoning_only: true
+    structure_spec:
+      sections: ["Assumptions", "Rationale (brief)", "Cautions (≤3)", "Answer", "Stronger Alternative"]
+    ordering:
+      run_before: ["output_format"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@Reasoning Evaluate my claim that all neutrinos have the same mass."
+        output_sketch: |
+          **Assumptions**: List explicit/implicit premises; mark any incorrect.
+          **Rationale (brief)**: 2–4 bullet points summarizing the key checks (no step-by-step chain-of-thought).
+          **Cautions (≤3)**: Note uncertainties or edge cases.
+          **Answer**: Direct conclusion.
+          **Stronger Alternative**: Safer phrasing or approach.
+
+  - name: "@@StepByStep"
+    category: "structure"
+    description: "When this decorator is used, structure the answer as a sequence of logically ordered steps labeled [Step 1], [Step 2], ..., [Final Step]. This progression must always be followed."
+    trigger_pattern: '^@@StepByStep(\b|\()'
+    scope_rule: "inherits"
+    effect_contract:
+      requires_sequential_steps: true
+      enforce_logical_order: true
+      enforce_labels: true
+      default_labels: ["[Step 1]", "[Step 2]", "...", "[Final Step]"]
+      final_step_required: true
+    structure_spec:
+      type: "sequential_steps"
+      labels: ["[Step 1]", "[Step 2]", "[Final Step]"]
+    ordering:
+      run_after: ["tone"]
+      run_before: ["output_format"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@StepByStep How do I bake a cake?"
+        output_sketch: |
+          [Step 1] Gather ingredients.
+          [Step 2] Mix wet and dry components.
+          [Final Step] Bake and cool.
+
+  - name: "@@Refine"
+    category: "structure"
+    description: "Run multiple refinements that improve clarity, accuracy, or effectiveness at each step. Label as [Iteration 1] → ... → [Final Answer]. Each refinement must add improvements."
+    trigger_pattern: '^@@Refine\(iterations=(\d+)\)'
+    parameters:
+      - name: "iterations"
+        type: integer
+        required: true
+    structure_spec:
+      iteration_template:
+        label_format: "[Iteration {i}]"
+        sections: ["Change Notes", "Refined Draft"]
+      final_section_label: "[Final Answer]"
+    examples:
+      - input: "@@Refine(iterations=3) Write a two-sentence blurb about KM3NeT."
+        output_sketch: |
+          [Iteration 1]
+          Change Notes: • Clarify detector location
+          Refined Draft: ...
+          [Iteration 2]
+          Change Notes: • Shorten second sentence
+          Refined Draft: ...
+          [Final Answer]
+          ...
+
+  # ---------------------------------
+  # OutputFormat decorator (active)
+  # ---------------------------------
+  - name: "@@OutputFormat"
+    aliases: []
+    category: "output_format"
+    description: "Format the response in a specified structure (json, markdown, yaml, or xml)."
+    trigger_pattern: '^@@OutputFormat\(([^)]+)\)'
+    scope_rule: "inherits"
+    parameters:
+      - name: "format"
+        type: enum
+        allowed: ["json", "markdown", "yaml", "xml", "pdf", "docx"]
+        required: true
+    effect_contract:
+      enforce_output_format: true
+      strict: true
+    output_shape:
+      type_param: "format"       # bind to the provided parameter
+      schema_ref: null           # optional JSON schema reference for json mode
+    ordering:
+      run_before: ["verification"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@OutputFormat(json) Summarize the article."
+        output_sketch: |
+          { "summary": "..." }
+
+  # ---------------------------------
+  # Error handling decorator (active)
+  # ---------------------------------
+  - name: "@@ErrorReport"
+    aliases: []
+    category: "error_handling"
+    description: "If uncertainties/conflicts exist, emit an 'Error Report' section before the final answer."
+    trigger_pattern: '^@@ErrorReport\b'
+    scope_rule: "inherits"
+    effect_contract:
+      report_uncertainties: true
+      report_conflicts: true
+      placement: "before_answer"
+      json_mapping:
+        error_report_field: "error_report"
+        answer_field: "answer"
+    structure_spec:
+      sections: ["Error Report", "Answer"]
+    ordering:
+      run_after: ["method", "structure", "verification"]
+      run_before: ["tone"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "always_show_when_flagged"
+    examples:
+      - input: "@@ErrorReport Provide the latest findings."
+        output_sketch: |
+          **Error Report**: Ambiguity detected in data sources...
+          **Answer**: Given the uncertainty, the most reliable statement is...
+
+  # ---------------------------------
+  # User confirmation decorator (active)
+  # ---------------------------------
+  - name: "@@Confirm"
+    aliases: []
+    category: "user_confirmation"
+    description: "Provide a short preview and ask for confirmation before finalizing."
+    trigger_pattern: '^@@Confirm\b'
+    scope_rule: "inherits"
+    effect_contract:
+      require_confirmation: true
+      preview_lines: 3
+    structure_spec:
+      sections: ["Preview", "Confirm?"]
+    ordering:
+      run_after: ["output_format", "verification", "structure", "method", "error_handling", "tone"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "ask_once_then_continue"
+    examples:
+      - input: "@@Confirm Draft a response to the client."
+        output_sketch: |
+          Preview: Three-line synopsis...
+          Confirm?: Proceed (yes/no)?
+
+  # ---------------------------------
+  # Controller decorators (active)
+  # ---------------------------------
+  - name: "@@chat"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Activate decorators from this message at chat scope (persist until @@clear)."
+    trigger_pattern: '^@@chat\b'
+    scope_rule: "inherits"
+    effect_contract:
+      chat_scope_mode: true
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn-and-continue"
+
+  - name: "@@message"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Apply decorators only to the current message; pause chat-scoped ones."
+    trigger_pattern: '^@@message\b'
+    scope_rule: "inherits"
+    effect_contract:
+      message_scope_mode: true
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+
+  - name: "@@clear"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Clear active chat-scoped decorators (all or specific)."
+    trigger_pattern: '^@@clear(.*)?$'
+    scope_rule: "inherits"
+    parameters:
+      - name: "targets"
+        type: list
+        required: false
+    effect_contract:
+      clear_targets: "all_if_empty_else_named"
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+
+
+  - name: "@@Help"
+    category: "utility"
+    description: "Print a list of all available decorators with their descriptions."
+    trigger_pattern: '^(?:@@Help\b|help\b)'
+    structure_spec:
+      type: "listing"
+      item_format: "- {name}: {status} — {description}"
+
+  - name: "@@InProcess"
+    category: "utility"
+    description: "Show the list of currently active chat-scoped decorators."
+    trigger_pattern: '^@@InProcess\b'
+    structure_spec:
+      type: "listing"
+      item_format: "- {name}"
+
+  - name: "@@WithReferences"
+    category: "verification"
+    description: "When this decorator is present, all claims must be supported by credible references."
+    trigger_pattern: '^@@WithReferences\b'
+    structure_spec:
+      sections: [
+        "Initial Answer",
+        "Identify Key Claims",
+        "Find Credible Sources",
+        "Integrate Citations",
+        "Provide Full References",
+        "Verify Credibility",
+        "Final Answer"
+      ]
+
+  - name: "@@VerifyClaims"
+    category: "verification"
+    description: "When this decorator is used, verify the factual accuracy of key claims before finalizing the response."
+    trigger_pattern: '^@@VerifyClaims\b'
+    structure_spec:
+      sections: [
+        "Initial Answer",
+        "Identify Claims",
+        "Research & Verify",
+        "Mark Uncertainties",
+        "Provide Verified Sources",
+        "Final Answer"
+      ]
