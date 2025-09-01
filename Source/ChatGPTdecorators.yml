@@ -13,7 +13,7 @@
 
 schema: "chatgpt-decorators"
 language: "en"
-version: "0.0.1"
+version: "0.0.2"
 
 # ------------------------------
 # Defaults / Global Settings
@@ -180,8 +180,6 @@ decorators:
     structure_spec:
       type: "listing"
       item_format: "- {name}"
-
-
 
 
 
@@ -519,6 +517,288 @@ decorators:
           **Normalized Claims**: Draft: D1–D3; New: N1–N3...
           **Implications for User Draft**: Replace D2 with N2; qualify D3...
           **Update Plan**: Edit §3.2 lines x–y; add citation; adjust fig caption...
+
+
+
+  # ---------------------------------
+  # Programing decorators  
+  # ---------------------------------
+
+  - name: "@@CodeGen"
+    aliases: ["@@Scaffold"]
+    category: "method"
+    description: "Generate code or project scaffolds across languages: blueprint, scaffold, implement modules, extend repos, or create shims—while honoring explicit specs."
+    trigger_pattern: '^@@CodeGen(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "mode"
+        type: enum
+        allowed: ["blueprint","scaffold","implement","extend","shim"]
+        required: false
+        default: "scaffold"
+        description: "blueprint: design/API spec; scaffold: repo/files; implement: runnable code; extend: add to existing tree; shim: adapters/connectors."
+      - name: "language"
+        type: enum
+        allowed: ["auto","python","cpp","c","java","kotlin","js","ts","go","rust","csharp","php","ruby","r","sql","bash","other"]
+        required: false
+        default: "auto"
+        description: "Primary language; 'auto' attempts detection from brief/constraints."
+      - name: "runtime"
+        type: string
+        required: false
+        default: ""
+        description: "Toolchain/dialect hints (e.g., 'python3.11', 'gcc13 -std=c++20', 'node20', 'postgres15')."
+      - name: "package_manager"
+        type: enum
+        allowed: ["auto","pip","uv","poetry","conda","npm","pnpm","yarn","cargo","go","cmake","maven","gradle","r_pkgdown","none"]
+        required: false
+        default: "auto"
+        description: "Ecosystem manager/build system."
+      - name: "frameworks"
+        type: list
+        item_type: string
+        required: false
+        description: "Requested frameworks/libs (e.g., ['pytest','ruff','mypy'] or ['gtest','fmt'])."
+      - name: "targets"
+        type: list
+        item_type: enum
+        required: false
+        description: "Outputs: cli | library | service | notebook | plugin | extension."
+        # item enums
+        item_type_allowed: ["cli","library","service","notebook","plugin","extension"]
+      - name: "entry_point"
+        type: string
+        required: false
+        default: ""
+        description: "Executable entry (e.g., 'src/app.py:main', 'src/main.cpp')."
+      - name: "api_style"
+        type: enum
+        allowed: ["auto","oop","functional","mixed"]
+        required: false
+        default: "auto"
+      - name: "repo_layout"
+        type: enum
+        allowed: ["src_layout","flat","monorepo"]
+        required: false
+        default: "src_layout"
+      - name: "tests"
+        type: enum
+        allowed: ["none","unit","integration","both"]
+        required: false
+        default: "unit"
+      - name: "lint_fmt"
+        type: enum
+        allowed: ["on","off"]
+        required: false
+        default: "on"
+      - name: "ci"
+        type: enum
+        allowed: ["none","github_actions","gitlab_ci"]
+        required: false
+        default: "github_actions"
+      - name: "containerize"
+        type: enum
+        allowed: ["none","docker","compose"]
+        required: false
+        default: "none"
+      - name: "license"
+        type: enum
+        allowed: ["MIT","Apache-2.0","BSD-3-Clause","GPL-3.0","Unlicense","none"]
+        required: false
+        default: "MIT"
+      - name: "docs"
+        type: enum
+        allowed: ["readme","mkdocs","sphinx","roxygen2","pkgdown","none"]
+        required: false
+        default: "readme"
+      - name: "dependencies_allowlist"
+        type: list
+        item_type: string
+        required: false
+        description: "Restrict dependencies to this list (names or patterns)."
+      - name: "dependencies_denylist"
+        type: list
+        item_type: string
+        required: false
+        description: "Ban dependencies (names or patterns)."
+      - name: "constraints"
+        type: list
+        item_type: enum
+        required: false
+        description: "Generation constraints: minimal_deps | portable | hpc | gpu | wasm | offline."
+        item_type_allowed: ["minimal_deps","portable","hpc","gpu","wasm","offline"]
+      - name: "naming_convention"
+        type: enum
+        allowed: ["snake_case","camelCase","PascalCase","kebab-case","auto"]
+        required: false
+        default: "auto"
+      - name: "examples"
+        type: integer
+        required: false
+        default: 1
+        description: "Number of usage examples to include."
+      - name: "deterministic_seed"
+        type: integer
+        required: false
+        default: 0
+        description: "If >0, stabilize generated content ordering."
+      - name: "extend_from"
+        type: string
+        required: false
+        default: ""
+        description: "Paste an existing file tree/manifest; generator will add onto it."
+    effect_contract:
+      # Core guarantees
+      code_generation_enabled: true
+      honors_spec_fidelity: true           # do not silently 'improve' beyond the brief
+      produces_runnable_when_implement: true
+      produces_complete_scaffold_when_scaffold: true
+      produces_clear_blueprint_when_blueprint: true
+      safe_defaults_no_secrets: true       # .env.example, use env vars
+      minimal_dependencies_by_default: true
+      add_tests_per_param: "@parameters.tests"
+      add_ci_per_param: "@parameters.ci"
+      add_lint_fmt_per_param: "@parameters.lint_fmt"
+      add_container_per_param: "@parameters.containerize"
+      repo_layout_mode: "@parameters.repo_layout"
+      language_hint: "@parameters.language"
+      runtime_hint: "@parameters.runtime"
+      package_manager_hint: "@parameters.package_manager"
+      api_style_hint: "@parameters.api_style"
+      entry_binding: "@parameters.entry_point"
+      apply_allowlist: "@parameters.dependencies_allowlist"
+      apply_denylist: "@parameters.dependencies_denylist"
+      apply_constraints: "@parameters.constraints"
+      naming_convention_hint: "@parameters.naming_convention"
+      example_count: "@parameters.examples"
+      deterministic_mode: "@parameters.deterministic_seed"
+      extend_from_manifest: "@parameters.extend_from"
+    structure_spec:
+      sections:
+        - "Intent & Parameters"            # echo resolved settings
+        - "Design/Blueprint (if requested)"# APIs, modules, data models, deps plan
+        - "Project Tree / Manifest"        # file tree with brief purpose tags
+        - "Generated Files"                # show content of key files
+        - "How to Run & Test"              # commands: install, run, test, lint, ci
+        - "Notes & Constraints"            # deps policy, license, secrets handling
+    ordering:
+      run_before: ["verification","structure","tone","output_format","user_confirmation"]
+      run_after: ["method"]                 # remains in method but executes early
+    compatibility:
+      conflicts_with: []                    # intentionally compatible with @@CodeCheck
+    failure_behavior: "warn_and_continue"   # if ambiguity remains, generate safest minimal viable output
+    examples:
+      - input: "@@CodeGen(mode=blueprint, language=python, runtime='python3.11', targets=['library','cli'], tests='unit', lint_fmt='on') Build an 'analysis' package for data processing."
+        output_sketch: |
+          Intent & Parameters: Python 3.11, library+CLI, unit tests, lint on.
+          Design/Blueprint: Public API (analysis.load, analysis.transform, analysis.stats, CLI 'analysis run').
+          Project Tree / Manifest: src/analysis/__init__.py, src/analysis/core.py, tests/test_core.py, pyproject.toml, README.md, .github/workflows/ci.yml …
+          How to Run & Test: uv/poetry install; pytest -q; ruff check; mypy .
+      - input: "@@CodeGen(mode=scaffold, language=cpp, runtime='gcc13 -std=c++20', frameworks=['gtest'], ci='github_actions', tests='both') Create a library + CLI."
+        output_sketch: |
+          Project Tree / Manifest: CMakeLists.txt, src/lib/foo.hpp/cpp, src/cli/main.cpp, tests/unit/test_foo.cpp, tests/integration/smoke.cpp, .github/workflows/ci.yml …
+          Generated Files: full contents for CMakeLists.txt, main.cpp, foo.* and tests.
+          How to Run & Test: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release; cmake --build build; ctest --test-dir build.
+      - input: "@@CodeGen(mode=implement, language=python, frameworks=['fastapi','pytest'], targets=['service'], containerize='docker') Make a tiny FastAPI service with one endpoint."
+        output_sketch: |
+          Generated Files: src/app.py (FastAPI), tests/test_app.py, pyproject.toml, Dockerfile, README.md, .gitignore.
+          How to Run & Test: uv/poetry install; uvicorn app:app; pytest -q; docker build -t app .
+      - input: "@@CodeGen(mode=shim, language=ts, frameworks=['jest'], targets=['library']) Adapter between OldAPI.getUser() and NewAPI.fetchUserById(id:string)."
+        output_sketch: |
+          Generated Files: src/shims/userAdapter.ts with mapping; tests/shims/userAdapter.test.ts.
+          How to Run & Test: npm i; npm test.
+      - input: "@@CodeGen(mode=extend, language=python, extend_from='(paste tree here)', tests='unit') Add module analysis/io/csv.py and tests."
+        output_sketch: |
+          Project Tree / Manifest: shows diff/additions.
+          Generated Files: new module and unit tests; respects existing layout and configs.
+
+  - name: "@@CodeCheck"
+    aliases: ["@@BugCheck", "@@StaticCheck"]
+    category: "verification"
+    description: "Diagnose code for errors, bugs, and incompatibilities across one or multiple snippets/modules—without proposing enhancements."
+    trigger_pattern: '^@@CodeCheck(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "language"
+        type: enum
+        allowed: ["auto","python","cpp","c","java","js","ts","go","rust","csharp","php","ruby","kotlin","scala","sql","bash","other"]
+        required: false
+        default: "auto"
+        description: "Hint the primary language; 'auto' attempts detection from code fences/file names."
+      - name: "cross_files"
+        type: boolean
+        required: false
+        default: true
+        description: "If true, check compatibility across multiple snippets/modules (imports, symbol linking, API contracts)."
+      - name: "entry_point"
+        type: string
+        required: false
+        default: ""
+        description: "Optional entry file/function to anchor compatibility checks (e.g., 'main.cpp', 'app.py:main')."
+      - name: "runtime"
+        type: string
+        required: false
+        default: ""
+        description: "Optional runtime/toolchain hints (e.g., 'python3.11', 'gcc13 -std=c++20', 'node20', 'postgres14'). Used only for diagnostics."
+      - name: "strict"
+        type: boolean
+        required: false
+        default: true
+        description: "If true, flag borderline/ambiguous issues; if false, report only high-confidence problems."
+      - name: "exec_allowed"
+        type: boolean
+        required: false
+        default: false
+        description: "Execution is not performed by default; this decorator is static/diagnostic-only."
+    effect_contract:
+      diagnostic_only: true                # no refactors, no enhancements
+      no_suggestions: true                 # do not propose 'better' code
+      detect_syntax_errors: true
+      detect_type_interface_issues: true   # missing symbols, wrong arity/types, bad generics/templates
+      detect_dependency_issues: true       # missing imports/includes/packages, circular deps
+      detect_api_contract_mismatch: true   # caller/callee signature drift, version/API surface
+      detect_resource_issues: true         # files/paths/env vars referenced but undefined
+      detect_sql_schema_mismatch: true     # columns/tables/types not found (when applicable)
+      detect_build_config_issues: true     # toolchain/flags inconsistencies when runtime hinted
+      cross_file_analysis: "@parameters.cross_files"
+      language_hint: "@parameters.language"
+      entry_binding: "@parameters.entry_point"
+      runtime_hint: "@parameters.runtime"
+      strict_mode: "@parameters.strict"
+      static_only_no_execution: "!@parameters.exec_allowed"
+    structure_spec:
+      sections:
+        - "Scope & Assumptions"            # language/runtime inference, files considered, entry point
+        - "Findings"                       # concrete issues with exact locations (file:line or snippet block)
+        - "Compatibility Check (if multi-snippet)" # interfaces/linking/import graph notes
+        - "Ambiguities / Unknowns"         # what would need environment info to decide
+        - "Minimal Repro / Tests (suggested checks only)" # reproduce steps without proposing refactors
+        - "Verdict"                        # pass/fail with confidence
+    ordering:
+      run_before: ["structure","tone","output_format"]  # diagnostics should shape content before formatting
+      run_after: ["method"]                             
+    compatibility:
+      conflicts_with: []                  # allowed with @@Reasoning, @@RiskReport, @@CiteSources
+    failure_behavior: "warn_and_continue" # if language can't be inferred, report ambiguity and proceed
+    examples:
+      - input: "@@CodeCheck(language=python, strict=true) \n```python\nimport numpy as np\nnp.arange(5).shape()\n```"
+        output_sketch: |
+          Scope & Assumptions: Python 3.x, single snippet.
+          Findings: AttributeError risk — 'shape' is a property, not callable. Location: line 2.
+          Ambiguities / Unknowns: None.
+          Verdict: FAIL (high confidence).
+      - input: "@@CodeCheck(cross_files=true, entry_point='main.cpp', runtime='gcc13 -std=c++20') \n#1: main.cpp ... \n#2: utils.hpp ... \n#3: utils.cpp ..."
+        output_sketch: |
+          Scope & Assumptions: C++20, files: main.cpp, utils.hpp, utils.cpp; entry: main.cpp.
+          Compatibility Check: 'foo(int)' declared in utils.hpp but defined as 'foo(double)' in utils.cpp.
+          Findings: Link-time/ODR mismatch likely; call site passes int.
+          Verdict: FAIL (high confidence).
+      - input: "@@CodeCheck(language=sql) \n```sql\nSELECT id, score FROM results WHERE status = 'ok' AND created_at > NOW() - INTERVAL '7 days';\n```"
+        output_sketch: |
+          Scope & Assumptions: SQL (PostgreSQL assumed).
+          Ambiguities / Unknowns: Table/columns existence not verifiable without schema.
+          Findings: None detected statically; time function usage valid for Postgres; compatibility uncertain for MySQL.
+          Verdict: PASS (low-medium confidence).
 
   # ---------------------------------
   # User confirmation assist decorator. 
