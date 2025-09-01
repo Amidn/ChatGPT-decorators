@@ -1,6 +1,7 @@
 # ==========================================================
 # Prompt Decorators Definition File (YAML schema)
 # Author: Amid Nayerhoda
+# github:  https://github.com/Amidn/ChatGPT-decorators
 # Date: 2025-09-01
 # Description: Defines decorators for modifying ChatGPT responses.
 # Email: Nayerhoda@infn.it
@@ -156,11 +157,20 @@ decorators:
         output_sketch: "Warns about unknown decorator and ignores it."
 
   - name: "@@Help"
+    aliases: ["@@help"]
     category: "utility"
-    description: "Print a list of all available decorators with their descriptions."
+    description: "Print a meta header (author, description, GitHub latest link, current version) from the file header on the first line, then list all available decorators with their statuses and descriptions."
     trigger_pattern: '^(?:@@Help\b|help\b)'
     structure_spec:
       type: "listing"
+      # New: show a one-line meta header before the list, populated from the file header.
+      meta_header: true
+      meta_header_template: "ChatGPT Decorators — {description} | Author: {author} | GitHub (latest): {github} | Version: {version}"
+      meta_fields_source:
+        author: "$header.Author"
+        description: "$header.Description"
+        github: "$header.github"
+        version: "$header.version"
       item_format: "- {name}: {status} — {description}"
 
   - name: "@@InProcess"
@@ -170,8 +180,6 @@ decorators:
     structure_spec:
       type: "listing"
       item_format: "- {name}"
-
-
 
 
 
