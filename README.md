@@ -1,5 +1,7 @@
 
 
+# Activate Decorators
+
 > **Quick Start**
 >
 > 1) Upload **ChatGPTdecorators.yml** to the conversation and send:
