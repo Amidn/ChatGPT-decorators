@@ -1,5 +1,4 @@
 
-# Decorators Overview
 
 > **Quick Start**
 >
@@ -37,6 +36,8 @@
 >    GitHub (latest): https://github.com/Amidn/ChatGPT-decorators
 
 ---
+
+# Decorators Overview
 
 ## chat
 The `chat` decorator enables conversational context, allowing the model to maintain memory of previous messages in a chat-like interaction.
