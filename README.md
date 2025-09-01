@@ -1,47 +1,42 @@
 
-# How to Use (Quick Start)
-
-1) Load the YAML into the chat  
-   - Upload **ChatGPTdecorators.yml** to the conversation.  
-   - Send:  
-     ```
-     Read ChatGPTdecorators.yml as instructions
-     ```  
-   - ChatGPT is flexible about parsing; this line is usually enough to activate the decorators.
-
-2) Verify it’s loaded  
-   - Send:
-     ```
-     @@Help
-     ```
-   - You should see a header with author/version and a list of decorators.
-
-3) Use decorators  
-   - Examples:
-     ```
-     @@chat @@Tone(technical) @@StepByStep
-     Explain neutrino oscillations for a graduate audience.
-     ```
-     ```
-     @@message @@OutputFormat(json)
-     Summarize the following text in one JSON object with keys: tl;dr, key_points.
-     ```
-
-4) In isolated/non-member projects (with a Files section + Instructions box)  
-   - Upload **ChatGPTdecorators.yml** under Files.  
-   - In the **Instructions** box add:  
-     ```
-     Read ChatGPTdecorators.yml as instructions
-     ```  
-   - Then test with `@@Help`.
-
-5) Always fetch the latest version  
-   - Check the repo for updates before you start a new session:  
-     **GitHub (latest):** https://github.com/Amidn/ChatGPT-decorators
-
-
-     
 # Decorators Overview
+
+> **Quick Start**
+>
+> 1) Upload **ChatGPTdecorators.yml** to the conversation and send:
+>    ```
+>    Read ChatGPTdecorators.yml as instructions
+>    ```
+>    (ChatGPT is fairly flexible about parsing; this is typically enough.)
+>
+> 2) Verify:
+>    ```
+>    @@Help
+>    ```
+>    You should see a meta header (author, version, GitHub) and the list of decorators.
+>
+> 3) Use decorators:
+>    ```
+>    @@chat @@Tone(technical) @@StepByStep
+>    Explain neutrino oscillations for a graduate audience.
+>    ```
+>    ```
+>    @@message @@OutputFormat(json)
+>    Summarize the following text in one JSON object with keys: tl;dr, key_points.
+>    ```
+>
+> 4) **Isolated / non-member projects** (Files + Instructions):
+>    - Upload **ChatGPTdecorators.yml** to Files.
+>    - In the Instructions box add:
+>      ```
+>      Read ChatGPTdecorators.yml as instructions
+>      ```
+>    - Test with `@@Help`.
+>
+> 5) **Stay up to date**: always check the latest version  
+>    GitHub (latest): https://github.com/Amidn/ChatGPT-decorators
+
+---
 
 ## chat
 The `chat` decorator enables conversational context, allowing the model to maintain memory of previous messages in a chat-like interaction.
