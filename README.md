@@ -168,11 +168,58 @@ List the top 5 programming languages and their main uses.
 ```
 
 ## Tone
-The `Tone` decorator instructs the model to adopt a specific tone in its response, such as formal, friendly, or humorous.
+The `Tone` decorator instructs the model to adopt a specific tone in its response.
+
+**Available styles**
+- `formal`
+- `casual`
+- `friendly`
+- `technical`
+- `humorous`
+- `neutral`
+- `scientific`
+- `academic`
+- `argumentation`
+- `educational`
+- `motivational`
+- `storyteller`
+- `meditational`
+
+**Examples**
 
 ```markdown
 @@Tone(friendly)
 Welcome a new user to the platform.
+```
+
+```markdown
+@@Tone(scientific)
+Explain neutrino oscillations, using precise terminology and evidence-based statements.
+```
+
+```markdown
+@@Tone(academic)
+Draft a 150-word abstract on black hole thermodynamics with formal style.
+```
+
+```markdown
+@@Tone(argumentation)
+Defend the use of Bayesian inference in astrophysical data analysis with clear premises and a conclusion.
+```
+
+```markdown
+@@Tone(motivational)
+Write a short note encouraging a student before exams.
+```
+
+```markdown
+@@Tone(storyteller)
+Describe the birth of the universe as a short narrative for a general audience.
+```
+
+```markdown
+@@Tone(meditational)
+Guide a brief, calming breathing exercise in 5 lines.
 ```
 
 
