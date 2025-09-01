@@ -166,3 +166,29 @@ The `Tone` decorator instructs the model to adopt a specific tone in its respons
 @@Tone(friendly)
 Welcome a new user to the platform.
 ```
+
+
+## CodeCheck
+
+The `CodeCheck` decorator analyzes code (any language, any size) to detect bugs, errors, mismatches, or incompatibilities.
+It does not refactor or suggest improvements—it only reports problems.
+
+
+```markdown
+@@CodeCheck(language=python, strict=true)
+```python
+import numpy as np
+np.arange(5).shape()
+```
+
+
+
+## CodeGen
+The `CodeGen` decorator generates **code, modules, or entire package scaffolds**.  
+It can create a blueprint, scaffold, full implementation, repo extension, or shims between components.  
+By default, it produces runnable code with tests and safe defaults.
+
+```markdown
+@@CodeGen(mode=scaffold, language=python, targets=['library','cli'])
+Build an 'analysis' package with unit tests and CI.
+```
