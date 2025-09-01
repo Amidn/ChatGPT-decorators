@@ -176,9 +176,6 @@ It does not refactor or suggest improvements—it only reports problems.
 
 ```markdown
 @@CodeCheck(language=python, strict=true)
-```
-
-```python
 import numpy as np
 np.arange(5).shape()
 ```
