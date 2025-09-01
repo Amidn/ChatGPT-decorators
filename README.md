@@ -5,6 +5,10 @@
 > 1) Upload **ChatGPTdecorators.yml** to the conversation and send:
 >    ```
 >    Read ChatGPTdecorators.yml as instructions
+>    
+>    OR
+>   
+>    Read, update and remeber instructions based on ChatGPTdecorators.yml file.
 >    ```
 >    (ChatGPT is fairly flexible about parsing; this is typically enough.)
 >
