@@ -1,5 +1,46 @@
 
+# How to Use (Quick Start)
 
+1) Load the YAML into the chat  
+   - Upload **ChatGPTdecorators.yml** to the conversation.  
+   - Send:  
+     ```
+     Read ChatGPTdecorators.yml as instructions
+     ```  
+   - ChatGPT is flexible about parsing; this line is usually enough to activate the decorators.
+
+2) Verify it’s loaded  
+   - Send:
+     ```
+     @@Help
+     ```
+   - You should see a header with author/version and a list of decorators.
+
+3) Use decorators  
+   - Examples:
+     ```
+     @@chat @@Tone(technical) @@StepByStep
+     Explain neutrino oscillations for a graduate audience.
+     ```
+     ```
+     @@message @@OutputFormat(json)
+     Summarize the following text in one JSON object with keys: tl;dr, key_points.
+     ```
+
+4) In isolated/non-member projects (with a Files section + Instructions box)  
+   - Upload **ChatGPTdecorators.yml** under Files.  
+   - In the **Instructions** box add:  
+     ```
+     Read ChatGPTdecorators.yml as instructions
+     ```  
+   - Then test with `@@Help`.
+
+5) Always fetch the latest version  
+   - Check the repo for updates before you start a new session:  
+     **GitHub (latest):** https://github.com/Amidn/ChatGPT-decorators
+
+
+     
 # Decorators Overview
 
 ## chat
