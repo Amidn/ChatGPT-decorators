@@ -908,7 +908,21 @@ decorators:
     parameters:
       - name: "style"
         type: enum
-        allowed: ["formal", "casual", "friendly", "technical", "humorous", "neutral"]
+        allowed: [
+          "formal", 
+          "casual", 
+          "friendly", 
+          "technical", 
+          "humorous", 
+          "neutral",
+          "scientific",
+          "academic",
+          "argumentation",
+          "educational",
+          "motivational",
+          "storyteller",
+          "meditational"
+    ]
         required: true
     effect_contract:
       enforce_tone: true
@@ -923,7 +937,15 @@ decorators:
       conflicts_with: []
     failure_behavior: "warn_and_continue"
     examples:
-      - input: "@@Tone(formal) Summarize the meeting notes."
-        output_sketch: "A professional, formal summary of the notes."
-      - input: "@@Tone(friendly) Explain quantum entanglement."
-        output_sketch: "A casual, friendly explanation, easy to follow."
+      - input: "@@Tone(scientific) Explain photosynthesis."
+        output_sketch: "Precise, evidence-based explanation with terminology."
+      - input: "@@Tone(academic) Write an abstract about black hole thermodynamics."
+        output_sketch: "Formal, citation-ready academic style."
+      - input: "@@Tone(argumentation) Defend the use of Bayesian inference in physics."
+        output_sketch: "Structured argument with premises and conclusions."
+      - input: "@@Tone(motivational) Write a message for a student before exams."
+        output_sketch: "Encouraging, uplifting tone."
+      - input: "@@Tone(storyteller) Describe the birth of the universe."
+        output_sketch: "Narrative, engaging story with imagery."
+      - input: "@@Tone(meditational) Guide a short breathing exercise."
+        output_sketch: "Calm, soothing, rhythmic phrasing."
