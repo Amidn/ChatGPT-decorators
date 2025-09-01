@@ -1,0 +1,641 @@
+# ==========================================================
+# Prompt Decorators Definition File (YAML schema)
+# Author: Amid Nayerhoda
+# Date: 2025-09-01
+# Description: Defines decorators for modifying ChatGPT responses.
+# Email: Nayerhoda@infn.it
+# Notes:
+#  - Paste this YAML (including compliance + decorators) into ChatGPT at the start of a session.
+#  - In your prompt, clearly state that this file defines decorators and MUST be obeyed.
+#  - `@@` is a project convention; ChatGPT does not natively understand it unless you define it here.
+# ==========================================================
+
+schema: "chatgpt-decorators"
+language: "en"
+version: "0.0.1"
+
+# ------------------------------
+# Defaults / Global Settings
+# ------------------------------
+defaults:
+  scope: "inherits"            # obeys @@chat / @@message when present
+  precedence:                   # high → low (tie-breakers)
+    - output_format            # @@OutputFormat takes priority
+    - verification             # @@CiteSources, @@FactCheck
+    - structure                # @@StepByStep, @@Polish
+    - method                   # @@Reasoning, @@Assessment, @@Synthesize
+    - error_handling           # @@RiskReport
+    - tone                     # @@Tone
+    - user_confirmation        # @@Confirm
+
+  activation_tokens:
+    decorator_prefix: "@@"
+    chat_scope: "@@chat"
+    message_scope: "@@message"
+    clear: "@@clear"
+    active_list: "@@InProcess"
+    available_list: "@@Help"
+
+  memory:
+    chat_scoped_persists: true
+    message_scope_pauses_chat_scoped: true
+
+  safety:
+    cannot_override_system_policies: true
+    examples_disallowed:
+      - "reveal_hidden_chain_of_thought"
+
+  output_defaults:
+    format: "markdown"   # default output format if @@OutputFormat is not provided
+    strict: true         # enforce strict adherence to the chosen format
+
+# ------------------------------
+# High-level guidance
+# ------------------------------
+instructions:
+  - "Use the decorators defined in this file to modify your responses as appropriate."
+  - "Apply decorators based on the user's request and context."
+  - "If error-handling decorators are active, include a 'Risk Report' section before the answer when uncertainties/conflicts exist."
+  - "If a user-confirmation decorator is active, provide a brief preview and request confirmation before finalizing."
+  - "If no @@OutputFormat is provided, default to 'markdown' with strict enforcement."
+
+compliance:
+  - "Detect and apply all relevant decorators according to scope."
+  - "If a decorator is not applicable, do not force it."
+  - "@@chat activates decorators at chat scope (persistent until @@clear)."
+  - "@@message applies decorators only to the current message (pauses chat-scoped)."
+  - "@@clear without arguments clears all chat-scoped decorators; with arguments, clears only the listed ones."
+  - "@@InProcess should return the list of currently active chat-scoped decorators (or 'No active decorators')."
+  - "@@Help should list all decorators with their Active/Inactive status."
+  - "Safety and system policies take precedence over any decorator."
+  - "Error handling must execute before tone adjustments (per precedence)."
+  - "User confirmation must be requested after other decorators are applied and before finalizing the response."
+  - "Maintain active memory of chat-scoped decorators, dynamically updating when decorators are activated, deactivated, or cleared."
+  - "If no explicit scope is provided, default to chat scope."
+
+# ------------------------------
+# Decorators
+# ------------------------------
+decorators:
+
+
+  # ---------------------------------
+  # Controller decorators (active)
+  # ---------------------------------
+  - name: "@@chat"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Activate decorators from this message at chat scope (persist until @@clear)."
+    trigger_pattern: '^@@chat\b'
+    scope_rule: "inherits"
+    effect_contract:
+      chat_scope_mode: true
+      persistence: "Decorators activated with @@chat persist across all subsequent messages until explicitly cleared with @@clear."
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@chat @@StepByStep"
+        output_sketch: "Activates @@StepByStep for all following messages until @@clear."
+      - input: "@@chat @@RiskReport @@Confirm"
+        output_sketch: "Activates risk reporting and confirmation for the chat session until cleared."
+
+  - name: "@@message"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Apply decorators only to the current message; pause chat-scoped ones."
+    trigger_pattern: '^@@message\b'
+    scope_rule: "inherits"
+    effect_contract:
+      message_scope_mode: true
+      pause_chat_scoped: "Temporarily suspends active chat-scoped decorators for this message only; chat-scoped decorators resume after."
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@message @@OutputFormat(json)"
+        output_sketch: "Applies JSON output formatting only to this message, without affecting chat-scoped decorators."
+      - input: "@@message @@Confirm"
+        output_sketch: "Requests user confirmation for this message only; chat-scoped decorators remain paused for this message."
+
+  - name: "@@clear"
+    aliases: []
+    category: "controller"
+    kind: "controller"
+    description: "Clear active chat-scoped decorators (all or specific)."
+    trigger_pattern: '^@@clear(?:\(([^)]*)\))?$'
+    scope_rule: "inherits"
+    parameters:
+      - name: "targets"
+        type: list
+        item_type: string
+        required: false
+        parse:
+          separator: ","
+          trim_whitespace: true
+    effect_contract:
+      clear_targets: "all_if_empty_else_named"
+      on_unknown_target: "warn_and_ignore"
+    ordering:
+      run_before: ["output_format", "verification", "structure", "method", "error_handling", "tone", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@clear"
+        output_sketch: "Clears all active chat-scoped decorators."
+      - input: "@@clear(@@StepByStep, @@RiskReport)"
+        output_sketch: "Clears only the specified decorators from the active chat-scoped list."
+      - input: "@@clear(UnknownDecorator)"
+        output_sketch: "Warns about unknown decorator and ignores it."
+
+  - name: "@@Help"
+    category: "utility"
+    description: "Print a list of all available decorators with their descriptions."
+    trigger_pattern: '^(?:@@Help\b|help\b)'
+    structure_spec:
+      type: "listing"
+      item_format: "- {name}: {status} — {description}"
+
+  - name: "@@InProcess"
+    category: "utility"
+    description: "Show the list of currently active chat-scoped decorators."
+    trigger_pattern: '^@@InProcess\b'
+    structure_spec:
+      type: "listing"
+      item_format: "- {name}"
+
+
+
+
+
+
+
+  # ---------------------------------
+  # Action decorators  
+  # ---------------------------------
+
+  - name: "@@FactCheck"
+    aliases: ["@@VerifyClaims"]
+    category: "verification"
+    description: "Check the factual accuracy of key claims before finalizing the response, and provide supporting sources."
+    trigger_pattern: '^@@FactCheck\b'
+    structure_spec:
+      sections: [
+        "Initial Answer",
+        "Identify Claims",
+        "Research & Verify",
+        "Mark Uncertainties",
+        "Provide Verified Sources",
+        "Final Answer"
+      ]
+    effect_contract:
+      requires_fact_check: true
+      include_confidence: true
+      confidence_scale: ["low","medium","high"]
+      require_supporting_sources: true
+
+  - name: "@@CiteSources"
+    aliases: ["@@WithReferences", "@@ReferenceCheck", "@@SourceCheck", "@@AddCitations"]
+    category: "verification"
+    description: "Ensure all claims are supported with credible references or citations (academic or journalistic style)."
+    trigger_pattern: '^@@CiteSources\b'
+    structure_spec:
+      sections: [
+        "Initial Answer",
+        "Identify Key Claims",
+        "Find Credible Sources",
+        "Integrate Citations",
+        "Provide Full Citations",
+        "Verify Credibility",
+        "Final Answer"
+      ]
+
+
+  - name: "@@Polish"
+    aliases: ["@@Refine"]
+    category: "structure"
+    description: "Iteratively polish and improve a draft for clarity, accuracy, or effectiveness. Each pass shows Change Notes and a Refined Draft, then a Final Answer."
+    trigger_pattern: '^@@Polish(?:\(([^)]*)\))?\b'
+    parameters:
+      - name: "iterations"
+        type: integer
+        required: false
+        default: 3
+      - name: "goal"
+        type: string
+        required: false
+        description: "Primary objective for polishing (e.g., 'shorter and clearer', 'more persuasive', 'ATS-friendly')."
+    effect_contract:
+      iterations: "@parameters.iterations"
+      optimization_goal: "@parameters.goal"
+    structure_spec:
+      iteration_template:
+        label_format: "[Iteration {i}]"
+        sections: ["Change Notes", "Refined Draft"]
+      final_section_label: "[Final Answer]"
+    examples:
+      - input: "@@Polish Write a two-sentence blurb about KM3NeT."
+        output_sketch: |
+          [Iteration 1]
+          Change Notes: • Clarify detector location
+          Refined Draft: ...
+          [Iteration 2]
+          Change Notes: • Shorten second sentence
+          Refined Draft: ...
+          [Final Answer]
+          ...
+      - input: "@@Polish(iterations=5, goal='make it more persuasive') Draft a short cover letter."
+        output_sketch: |
+          [Iteration 1] ...
+          ...
+          [Final Answer] ...
+
+
+  - name: "@@StepByStep"
+    category: "structure"
+    description: "Structure the answer as a sequence of logically ordered steps labeled [Step 1] … [Final Step]."
+    trigger_pattern: '^@@StepByStep(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "n"
+        type: integer
+        required: false
+        description: "Target number of steps (hint, not strict)."
+      - name: "labels"
+        type: list
+        item_type: string
+        required: false
+        description: "Custom labels for steps (e.g., ['[1]', '[2]', '[Final]'])."
+      - name: "final_label"
+        type: string
+        required: false
+        default: "[Final Step]"
+      - name: "compact"
+        type: boolean
+        required: false
+        default: false
+    effect_contract:
+      requires_sequential_steps: true
+      enforce_logical_order: true
+      enforce_labels: true
+      default_labels: ["[Step 1]", "[Step 2]" ]
+      final_step_required: true
+      labels: "@parameters.labels"          # overrides defaults if provided
+      final_label: "@parameters.final_label"
+      compact_mode: "@parameters.compact"
+      target_step_count: "@parameters.n"
+    structure_spec:
+      type: "sequential_steps"
+    ordering:
+      run_after: ["tone"]
+      run_before: ["output_format"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@StepByStep How do I bake a cake?"
+        output_sketch: |
+          [Step 1] Gather ingredients.
+          [Step 2] Mix wet and dry components.
+          [Final Step] Bake and cool.
+      - input: "@@StepByStep(n=5, compact=true) Set up a Python project."
+        output_sketch: |
+          [Step 1] Install Python 3.x.
+          [Step 2] Create a virtual environment.
+          [Step 3] Activate the environment.
+          [Step 4] Install dependencies.
+          [Final Step] Run a quick smoke test.
+      - input: "@@StepByStep(labels=['[1]','[2]','[Done]'], final_label='[Done]') Outline the plan."
+        output_sketch: |
+          [1] Define scope.
+          [2] Assign tasks.
+          [Done] Review & commit.
+
+  - name: "@@Reasoning"
+    aliases: ["@@LogicCheck", "@@SanityCheck"]
+    category: "method"
+    description: "Audit assumptions and reasoning rigorously: identify stated/hidden assumptions, test their validity, scan for biases/fallacies, and ensure the conclusion follows. Never expose hidden chain-of-thought."
+    trigger_pattern: '^@@Reasoning(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "level"
+        type: enum
+        allowed: ["standard", "strict"]
+        required: false
+        default: "strict"
+        description: "Strict runs a deeper bias/fallacy scan and tighter validity checks."
+      - name: "max_flags"
+        type: integer
+        required: false
+        default: 5
+        description: "Maximum number of bias/fallacy/logic flags to list."
+      - name: "list_evidence_needs"
+        type: boolean
+        required: false
+        default: true
+        description: "If true, enumerate claims that require external evidence/citations."
+    effect_contract:
+      requires_reasoning: true
+      reasoning_placement: "before_answer"
+      no_chain_of_thought: true
+      summarized_reasoning_only: true
+      # Core audits
+      identify_assumptions: true
+      validate_assumptions: true              # mark plausible/unsupported/invalid
+      bias_scan: true                          # e.g., confirmation, anchoring, availability (summary only)
+      fallacy_scan: true                       # e.g., non sequitur, false cause, equivocation (summary only)
+      inference_audit: true                    # premise → inference → conclusion (concise)
+      contradiction_check: true                # internal consistency pass
+      boundary_conditions_check: true          # note edge cases where conclusion may fail
+      max_flags: "@parameters.max_flags"
+      evidence_needed_list: "@parameters.list_evidence_needs"
+      strict_mode: "@parameters.level"
+    structure_spec:
+      sections: [
+        "Assumptions (stated & hidden)",
+        "Assumption Validity (pass / needs support / invalid)",
+        "Bias & Fallacy Scan (≤N flags ; brief)",
+        "Logic Audit (premise → inference → conclusion, concise)",
+        "Evidence Needed (claims to verify or cite)",
+        "Conclusion (qualified)"
+      ]
+    ordering:
+      run_before: ["verification", "output_format"]   # do logic first; then fact-check/citations; then formatting
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@Reasoning Assess the claim that method A outperforms method B on dataset X."
+        output_sketch: |
+          **Assumptions (stated & hidden)**: ...
+          **Assumption Validity**: ...
+          **Bias & Fallacy Scan (≤5)**: ...
+          **Logic Audit**: ...
+          **Evidence Needed**: metrics source; baseline configs; statistical test.
+          **Conclusion (qualified)**: ...
+      - input: "@@Reasoning(level=standard, max_flags=3) Are these two statements logically compatible?"
+        output_sketch: |
+          **Assumptions**: ...
+          **Validity**: ...
+          **Bias & Fallacy Scan (≤3)**: ...
+          **Logic Audit**: ...
+          **Conclusion (qualified)**: ...
+
+  - name: "@@Assessment"
+    aliases: ["@@Critique", "+++Critique", "@@Review", "@@Evaluate", "@@Feedback"]
+    category: "method"
+    description: "Provide a balanced, constructive assessment: identify the subject, highlight strengths, critique weaknesses, suggest improvements, and end with a constructive conclusion."
+    trigger_pattern: '^@@Assessment(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "min_strengths"
+        type: integer
+        required: false
+        default: 2
+      - name: "min_weaknesses"
+        type: integer
+        required: false
+        default: 2
+      - name: "improvement_count"
+        type: integer
+        required: false
+        default: 3
+    effect_contract:
+      balanced_assessment: true
+      require_min_strengths: "@parameters.min_strengths"
+      require_min_weaknesses: "@parameters.min_weaknesses"
+      require_improvements: "@parameters.improvement_count"
+    structure_spec:
+      sections: [
+        "Identify Subject",
+        "Highlight Strengths",
+        "Critique Weaknesses",
+        "Suggest Improvements",
+        "Constructive Conclusion"
+      ]
+    ordering:
+      run_after: ["tone"]
+      run_before: ["output_format"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@Assessment(min_strengths=2, min_weaknesses=2, improvement_count=3) Review this abstract."
+        output_sketch: |
+          **Identify Subject**: ...
+          **Highlight Strengths**: ...
+          **Critique Weaknesses**: ...
+          **Suggest Improvements**: ...
+          **Constructive Conclusion**: ...
+
+
+  - name: "@@Synthesize"
+    aliases: ["@@CompareSources", "@@MultiPerspective", "@@LiteratureReview", "@@Debate", "+++Debate"]
+    category: "method"
+    description: "Analyze and synthesize multiple sources or viewpoints: normalize claims, compare evidence and methods, map agreements/conflicts, appraise quality/bias, and produce a justified conclusion. Optionally include an update plan for a user draft."
+    trigger_pattern: '^@@Synthesize(?:\(([^)]*)\))?\b'
+    scope_rule: "inherits"
+    parameters:
+      - name: "criteria"
+        type: list
+        item_type: string
+        required: false
+        default: ["assumptions","methods","data","results","limitations","relevance"]
+        description: "Dimensions to compare across sources."
+      - name: "stance"
+        type: enum
+        allowed: ["neutral","best_supported","devils_advocate"]
+        required: false
+        default: "neutral"
+        description: "Neutral reports the landscape; best_supported privileges the strongest evidence; devils_advocate stresses counterarguments."
+      - name: "include_update_plan"
+        type: boolean
+        required: false
+        default: true
+        description: "If true and a user draft is provided, include a concise update plan to reconcile it with new sources."
+      - name: "max_sources"
+        type: integer
+        required: false
+        default: 8
+        description: "Upper bound on sources to synthesize (for brevity)."
+    effect_contract:
+      multi_source_analysis: true
+      require_comparison: true
+      normalize_claims: true               # extract comparable claims across sources
+      build_evidence_matrix: true          # tabulate claims vs sources
+      rate_evidence_quality: true          # brief quality/bias appraisal per source
+      agreement_conflict_mapping: true     # agreements, partial agreements, conflicts
+      inference_synthesis: true            # justify conclusion from mapped evidence
+      stance_mode: "@parameters.stance"
+      comparison_criteria: "@parameters.criteria"
+      summarized_reasoning_only: true      # never expose hidden chain-of-thought
+      include_update_plan: "@parameters.include_update_plan"
+      cap_sources_to: "@parameters.max_sources"
+    structure_spec:
+      sections: [
+        "Corpus & Scope",                  # list sources; note any user draft
+        "Normalized Claims",               # comparable statements extracted
+        "Methods & Data (overview)",       # key methodological/data differences
+        "Agreement–Conflict Matrix",       # quick map of which source supports what
+        "Quality & Bias Appraisal",        # concise appraisal per source
+        "Synthesis & Inference",           # what the weight of evidence supports
+        "Implications for User Draft (if any)", # concrete impact on the draft
+        "Update Plan (actionable steps)",  # edits/additions/removals to make
+        "Conclusion & Confidence"          # stance-aligned conclusion + confidence
+      ]
+    ordering:
+      run_after: ["tone", "method"]   # do logic/stance after reasoning audit
+      run_before: ["verification", "output_format", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@Synthesize Compare these 4 papers on neutrino mass ordering and tell me which conclusion is best supported."
+        output_sketch: |
+          **Corpus & Scope**: P1–P4 (2019–2024), ...
+          **Normalized Claims**: C1: Normal ordering favored; C2: ...
+          **Agreement–Conflict Matrix**: P1 ✓ C1; P2 ± C1; P3 ✗ C1; ...
+          **Quality & Bias Appraisal**: P3 small N; P2 method variance, ...
+          **Synthesis & Inference**: Weight favors C1 given ...
+          **Conclusion & Confidence**: Best-supported: C1; Confidence: medium-high.
+      - input: "@@Synthesize(include_update_plan=true) Contrast my draft’s Section 3 with this new paper and propose edits."
+        output_sketch: |
+          **Corpus & Scope**: Draft §3 vs NewPaper (2025)...
+          **Normalized Claims**: Draft: D1–D3; New: N1–N3...
+          **Implications for User Draft**: Replace D2 with N2; qualify D3...
+          **Update Plan**: Edit §3.2 lines x–y; add citation; adjust fig caption...
+
+  # ---------------------------------
+  # User confirmation assist decorator. 
+  # ---------------------------------
+
+  - name: "@@RiskReport"
+    aliases: ["@@ErrorReport"]   # backward compatibility
+    category: "error_handling"
+    description: "Highlight risks: if uncertainties, ambiguities, or conflicts exist, emit a 'Risk Report' section before the answer."
+    trigger_pattern: '^@@RiskReport\b'
+    scope_rule: "inherits"
+    effect_contract:
+      report_uncertainties: true
+      report_conflicts: true
+      include_confidence: true       # optional: low / medium / high
+      confidence_scale: ["low","medium","high"]
+      placement: "before_answer"
+      json_mapping:
+        risk_report_field: "risk_report"
+        answer_field: "answer"
+    structure_spec:
+      sections: ["Risk Report", "Answer"]
+    ordering:
+      run_after: ["method", "structure", "verification"]
+      run_before: ["tone"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "always_show_when_flagged"
+    examples:
+      - input: "@@RiskReport Provide the latest findings."
+        output_sketch: |
+          **Risk Report**: Ambiguity detected in data sources. Confidence: medium.
+          **Answer**: Given the uncertainty, the most reliable statement is...
+
+
+  - name: "@@Confirm"
+    aliases: []
+    category: "user_confirmation"
+    description: "Provide a short preview and ask for confirmation before finalizing. By default shows 3 preview lines, but can be customized."
+    trigger_pattern: '^@@Confirm(?:\((\d+)\))?\b'   # optional (N) for custom lines
+    scope_rule: "inherits"
+    parameters:
+      - name: "preview_lines"
+        type: integer
+        required: false
+        default: 3
+    effect_contract:
+      require_confirmation: true
+      preview_lines: "@parameters.preview_lines"
+    structure_spec:
+      sections: ["Preview", "Confirm?"]
+    ordering:
+      run_after: ["output_format", "verification", "structure", "method", "error_handling", "tone"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "ask_once_then_continue"
+    examples:
+      - input: "@@Confirm Draft a response to the client."
+        output_sketch: |
+          Preview: Three-line synopsis...
+          Confirm?: Proceed (yes/no)?
+      - input: "@@Confirm(5) Write a summary of the report."
+        output_sketch: |
+          Preview: Five lines shown...
+          Confirm?: Proceed (yes/no)?
+
+
+
+
+  # ---------------------------------
+  # IO decorator (active)
+  # ---------------------------------
+  - name: "@@OutputFormat"
+    aliases: []
+    category: "output_format"
+    description: "Format the response in a specified structure (json, markdown, yaml, or xml)."
+    trigger_pattern: '^@@OutputFormat\(([^)]+)\)'
+    scope_rule: "inherits"
+    parameters:
+      - name: "format"
+        type: enum
+        allowed: ["json", "markdown", "yaml", "xml", "pdf", "docx"]
+        required: true
+    effect_contract:
+      enforce_output_format: true
+      strict: true
+    output_shape:
+      type_param: "format"       # bind to the provided parameter
+      schema_ref: null           # optional JSON schema reference for json mode
+    ordering:
+      run_before: ["verification"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@OutputFormat(json) Summarize the article."
+        output_sketch: |
+          { "summary": "..." }
+
+
+  - name: "@@Tone"
+    category: "tone"
+    aliases: ["@@Style", "@@Voice"]
+    description: "Adjust the tone of the response according to the specified style (formal, casual, friendly, technical, humorous, etc.)."
+    trigger_pattern: '^@@Tone\(([^)]+)\)'
+    scope_rule: "inherits"
+    parameters:
+      - name: "style"
+        type: enum
+        allowed: ["formal", "casual", "friendly", "technical", "humorous", "neutral"]
+        required: true
+    effect_contract:
+      enforce_tone: true
+      style_binding: "@parameters.style"
+    structure_spec:
+      type: "tone_adjustment"
+      target: "entire_response"
+    ordering:
+      run_after: ["verification", "structure", "method", "error_handling"]
+      run_before: ["output_format", "user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@Tone(formal) Summarize the meeting notes."
+        output_sketch: "A professional, formal summary of the notes."
+      - input: "@@Tone(friendly) Explain quantum entanglement."
+        output_sketch: "A casual, friendly explanation, easy to follow."
