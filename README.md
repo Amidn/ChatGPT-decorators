@@ -259,9 +259,6 @@ This encourages active practice and self-expression.
 @@LangCoach(English)
 ```
 
-Here we go:
-
-⸻
 
 Question (in English):
 Do you think it is more important to save money for the future, or to spend it now to enjoy life? Why?
