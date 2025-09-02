@@ -1,13 +1,20 @@
 # Table of Contents
 - [Activate Decorators](#activate-decorators)
-  - [Quick Start](#quick-start)
+  - [Quick Start](#quick-start) — Load Decorators, Verify Setup, Use Decorators, ChatGPT Plus Project, Stay Up to Date
 - [Decorators Overview](#decorators-overview)
-
+  - [Controller decorators](#controller-decorators) — chat, message, clear, Help, InProcess
+  - [Verification decorators](#verification-decorators) — FactCheck, CiteSources, CodeCheck
+  - [Structure decorators](#structure-decorators) — Polish, StepByStep
+  - [Method decorators](#method-decorators) — Reasoning, Assessment, Synthesize, CodeGen
+  - [Error-handling decorators](#error-handling-decorators) — RiskReport
+  - [User-confirmation decorators](#user-confirmation-decorators) — Confirm
+  - [Output & Tone decorators](#output--tone-decorators) — OutputFormat, Tone
+  - [Language-learning decorators](#language-learning-decorators) — LangCoach
 # Activate Decorators
 
-  **Quick Start**
+  ## Quick Start
 
-  ***Load Decorators***
+  ### Load Decorators
  
   Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
 
@@ -22,7 +29,7 @@
      ```
      (ChatGPT is fairly flexible about parsing; this is typically enough.)
  
-  ***Verify Setup***
+  ### Verify Setup 
 
    Verify using:
      ```
@@ -30,7 +37,7 @@
      ```
      You should see a meta header (author, version, GitHub) and the list of decorators.
  
-  ***Use decorators***
+  ### Use decorators 
      ```
      @@chat @@Tone(technical) @@StepByStep
      Explain neutrino oscillations for a graduate audience.
@@ -39,23 +46,27 @@
      @@message @@OutputFormat(json)
      Summarize the following text in one JSON object with keys: tl;dr, key_points.
      ```
- 
-  4) **Isolated / non-member projects** (Files + Instructions):
-     - Upload **ChatGPTdecorators.yml** to Files.
+  ### ChatGPT Plus Project
+   **Isolated / non-member projects** (Files + Instructions):
+     - Upload **ChatGPTdecorators.yml** to project files.
      - In the Instructions box add:
        ```
        Read ChatGPTdecorators.yml as instructions
        ```
      - Test with `@@Help`.
  
-  5) **Stay up to date**: always check the latest version  
+  ### Stay up to date
+  
+    always check the latest version  
      GitHub (latest): https://github.com/Amidn/ChatGPT-decorators
 
 ---
 
 # Decorators Overview
 
-## chat
+## Controller decorators
+
+### chat
 The `chat` decorator enables conversational context, allowing the model to maintain memory of previous messages in a chat-like interaction.
 
 ```markdown
@@ -63,7 +74,7 @@ The `chat` decorator enables conversational context, allowing the model to maint
 You are a helpful assistant. Remember the user's preferences and respond accordingly.
 ```
 
-## message
+### message
 The `message` decorator is used to specify a single message or instruction for the model to respond to, without maintaining conversational context.
 
 ```markdown
@@ -71,7 +82,7 @@ The `message` decorator is used to specify a single message or instruction for t
 Summarize the following article in one paragraph.
 ```
 
-## clear
+### clear
 The `clear` decorator resets or clears the conversation history, ensuring the next response is generated with no prior context.
 
 ```markdown
@@ -79,7 +90,7 @@ The `clear` decorator resets or clears the conversation history, ensuring the ne
 Forget all previous instructions and start fresh.
 ```
 
-## Help
+### Help
 The `Help` decorator instructs the model to provide assistance or guidance on a specific topic or feature.
 
 ```markdown
@@ -87,7 +98,7 @@ The `Help` decorator instructs the model to provide assistance or guidance on a 
 Explain how to use the search function in this application.
 ```
 
-## InProcess
+### InProcess
 The `InProcess` decorator is used to indicate that a task is ongoing or to provide updates about a process that has not yet completed.
 
 ```markdown
@@ -95,7 +106,10 @@ The `InProcess` decorator is used to indicate that a task is ongoing or to provi
 Currently gathering data. Please wait while I complete the analysis.
 ```
 
-## FactCheck
+
+## Verification decorators
+
+### FactCheck
 The `FactCheck` decorator instructs the model to verify the accuracy of statements or claims, and provide sources or corrections if necessary.
 
 ```markdown
@@ -111,7 +125,24 @@ The `CiteSources` decorator tells the model to include citations or references f
 List three recent studies about the effects of caffeine, and cite your sources.
 ```
 
-## Polish
+
+### CodeCheck
+
+The `CodeCheck` decorator analyzes code (any language, any size) to detect bugs, errors, mismatches, or incompatibilities.
+It does not refactor or suggest improvements—it only reports problems.
+
+
+```markdown
+@@CodeCheck(language=python, strict=true)
+import numpy as np
+np.arange(5).shape()
+```
+
+
+
+## Structure decorators
+
+### Polish
 The `Polish` decorator asks the model to improve the clarity, grammar, and style of a given text without changing its meaning.
 
 ```markdown
@@ -119,7 +150,7 @@ The `Polish` decorator asks the model to improve the clarity, grammar, and style
 this is a text with bad grammar and spelling. please fix it
 ```
 
-## StepByStep
+### StepByStep
 The `StepByStep` decorator instructs the model to break down its response into clear, logical steps.
 
 ```markdown
@@ -127,7 +158,9 @@ The `StepByStep` decorator instructs the model to break down its response into c
 How do I change a flat tire?
 ```
 
-## Reasoning
+## Method decorators
+
+### Reasoning
 The `Reasoning` decorator prompts the model to show its reasoning process explicitly, making its logic and thought process transparent.
 
 ```markdown
@@ -135,7 +168,7 @@ The `Reasoning` decorator prompts the model to show its reasoning process explic
 Why is the sky blue?
 ```
 
-## Assessment
+### Assessment
 The `Assessment` decorator asks the model to evaluate or critique something, such as an argument, plan, or piece of writing.
 
 ```markdown
@@ -143,7 +176,7 @@ The `Assessment` decorator asks the model to evaluate or critique something, suc
 Assess the strengths and weaknesses of this business proposal.
 ```
 
-## Synthesize
+### Synthesize
 The `Synthesize` decorator instructs the model to combine information from multiple sources or ideas to create a cohesive summary or new insight.
 
 ```markdown
@@ -151,7 +184,19 @@ The `Synthesize` decorator instructs the model to combine information from multi
 Combine the following articles into a single summary.
 ```
 
-## RiskReport
+### CodeGen
+The `CodeGen` decorator generates **code, modules, or entire package scaffolds**.  
+It can create a blueprint, scaffold, full implementation, repo extension, or shims between components.  
+By default, it produces runnable code with tests and safe defaults.
+
+```markdown
+@@CodeGen(mode=scaffold, language=python, targets=['library','cli'])
+Build an 'analysis' package with unit tests and CI.
+```
+
+## Error-handling decorators
+
+### RiskReport
 The `RiskReport` decorator tells the model to identify and explain potential risks associated with a plan, decision, or scenario.
 
 ```markdown
@@ -159,7 +204,10 @@ The `RiskReport` decorator tells the model to identify and explain potential ris
 What are the risks of investing in cryptocurrency?
 ```
 
-## Confirm
+
+## User-confirmation decorators
+
+### Confirm
 The `Confirm` decorator asks the model to verify or validate information, instructions, or user input.
 
 ```markdown
@@ -167,7 +215,10 @@ The `Confirm` decorator asks the model to verify or validate information, instru
 Did you receive my last message?
 ```
 
-## OutputFormat
+
+## Output & Tone decorators
+
+### OutputFormat
 The `OutputFormat` decorator specifies the desired format for the model's output, such as JSON, table, or bullet points.
 
 ```markdown
@@ -175,7 +226,7 @@ The `OutputFormat` decorator specifies the desired format for the model's output
 List the top 5 programming languages and their main uses.
 ```
 
-## Tone
+### Tone
 The `Tone` decorator instructs the model to adopt a specific tone in its response.
 
 **Available styles**
@@ -230,33 +281,12 @@ Describe the birth of the universe as a short narrative for a general audience.
 Guide a brief, calming breathing exercise in 5 lines.
 ```
 
-
-## CodeCheck
-
-The `CodeCheck` decorator analyzes code (any language, any size) to detect bugs, errors, mismatches, or incompatibilities.
-It does not refactor or suggest improvements—it only reports problems.
-
-
-```markdown
-@@CodeCheck(language=python, strict=true)
-import numpy as np
-np.arange(5).shape()
-```
+## Language-learning decorators
 
 
 
-## CodeGen
-The `CodeGen` decorator generates **code, modules, or entire package scaffolds**.  
-It can create a blueprint, scaffold, full implementation, repo extension, or shims between components.  
-By default, it produces runnable code with tests and safe defaults.
 
-```markdown
-@@CodeGen(mode=scaffold, language=python, targets=['library','cli'])
-Build an 'analysis' package with unit tests and CI.
-```
-
-
-## LangCoach
+### LangCoach
 The `LangCoach` decorator is designed for language learning.  
 It asks a simple question in the target language, and the learner replies in either the target or their native language (depending on level).  
 This encourages active practice and self-expression.
@@ -282,3 +312,4 @@ Frage (auf Deutsch):
 Was ist für dich wichtiger: mehr Geld zu verdienen oder mehr Freizeit zu haben? Warum?
 
 👉 Bitte antworte in Deutsch mit ungefähr einem Absatz (oder zwei, wenn du möchtest). Danach gebe ich dir Feedback zu Grammatik, Wortwahl, Redewendungen und Vorschläge für bessere Alternativen – plus eine kurze Zusammenfassung und eine Anschlussfrage.
+
