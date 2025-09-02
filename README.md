@@ -1,7 +1,6 @@
 # Table of Contents
 - [Activate Decorators](#activate-decorators)
-    - [Quick Start](##Quick Start)
-
+  - [Quick Start](#quick-start)
 - [Decorators Overview](#decorators-overview)
 
 # Activate Decorators
