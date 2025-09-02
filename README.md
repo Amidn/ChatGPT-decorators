@@ -4,7 +4,7 @@
 
 > **Quick Start**
 >
-> 1) Upload **ChatGPTdecorators.yml** to the conversation and send:
+> 1) Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
 >    ```
 >    Read ChatGPTdecorators.yml as instructions
 >    ```

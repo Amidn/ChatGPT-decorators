@@ -223,7 +223,6 @@ decorators:
         "Final Answer"
       ]
 
-
   - name: "@@Polish"
     aliases: ["@@Refine"]
     category: "structure"
@@ -262,7 +261,6 @@ decorators:
           [Iteration 1] ...
           ...
           [Final Answer] ...
-
 
   - name: "@@StepByStep"
     category: "structure"
@@ -441,7 +439,6 @@ decorators:
           **Suggest Improvements**: ...
           **Constructive Conclusion**: ...
 
-
   - name: "@@Synthesize"
     aliases: ["@@CompareSources", "@@MultiPerspective", "@@LiteratureReview", "@@Debate", "+++Debate"]
     category: "method"
@@ -517,7 +514,6 @@ decorators:
           **Normalized Claims**: Draft: D1–D3; New: N1–N3...
           **Implications for User Draft**: Replace D2 with N2; qualify D3...
           **Update Plan**: Edit §3.2 lines x–y; add citation; adjust fig caption...
-
 
 
   # ---------------------------------
@@ -866,8 +862,6 @@ decorators:
           Confirm?: Proceed (yes/no)?
 
 
-
-
   # ---------------------------------
   # IO decorator (active)
   # ---------------------------------
@@ -949,3 +943,129 @@ decorators:
         output_sketch: "Narrative, engaging story with imagery."
       - input: "@@Tone(meditational) Guide a short breathing exercise."
         output_sketch: "Calm, soothing, rhythmic phrasing."
+
+
+
+
+  # ---------------------------------
+  # Lang decorator (active)
+  # ---------------------------------
+  - name: "@@LangCoach"
+    aliases: ["@@LanguageTutor", "@@LangTutor", "@@LanguageCoach"]
+    category: "method"
+    description: "Coach-led language-learning flow for B1+ learners: asks a clear question in the target language, gathers the learner's paragraph-length reply, estimates CEFR level, and delivers step-by-step feedback—covering grammar, word choice, idioms/expressions, and a strengths/mistakes summary. Can source questions from general prompts, domains, or current news."
+    trigger_pattern: '^@@LangCoach\(([^,]+)(?:, *([^,]+))?\)'
+    scope_rule: "inherits"
+    parameters:
+      - name: "target_language"
+        type: string
+        required: true
+        description: "Language the learner wants to practice (question + corrections examples use this). Parsed from first positional argument."
+      - name: "topic_mode"
+        type: enum
+        allowed: ["auto", "news", "general", "custom", "domain"]
+        required: false
+        default: "auto"
+        description: "Where the question/topic comes from: auto→fallback to general; news→pull a timely topic; custom→user-provided; domain→choose from the given fields. Parsed from second positional argument if present."
+      - name: "domains"
+        type: list
+        item_type: string
+        required: false
+        description: "Relevant fields when topic_mode='domain' (e.g., ['physics','history','social science'])."
+      - name: "custom_topic"
+        type: string
+        required: false
+        description: "Exact topic/question seed when topic_mode='custom'."
+      - name: "cefr_min"
+        type: enum
+        allowed: ["B1","B2","C1","C2"]
+        required: false
+        default: "B1"
+        description: "This tutor is intended for B1+; if the detected level is below this, provide a simpler re-phrasing or recommend starter resources."
+      - name: "question_complexity"
+        type: enum
+        allowed: ["simple","standard","advanced"]
+        required: false
+        default: "standard"
+      - name: "answer_length_hint"
+        type: enum
+        allowed: ["short","paragraph","two_paragraphs","free"]
+        required: false
+        default: "paragraph"
+      - name: "level_detection"
+        type: enum
+        allowed: ["auto","manual"]
+        required: false
+        default: "auto"
+        description: "auto→estimate CEFR from the learner’s reply; manual→expect user to declare level in prompt."
+      - name: "level_nudge"
+        type: enum
+        allowed: ["none","half","one"]
+        required: false
+        default: "half"
+        description: "How much to pitch feedback above the detected level: none (same level), half (~A2.5/B1.5 etc.), one (full level up)."
+      - name: "feedback_sections"
+        type: list
+        item_type: enum
+        item_type_allowed: ["grammar","word_choice","idioms_expressions","better_alternatives","summary"]
+        required: false
+        default: ["grammar","word_choice","idioms_expressions","better_alternatives","summary"]
+        description: "Which feedback blocks to emit and in what order."
+      - name: "news_recency_days"
+        type: integer
+        required: false
+        default: 7
+        description: "When topic_mode='news', choose trending items within this many days."
+      - name: "news_domains"
+        type: list
+        item_type: string
+        required: false
+        default: ["bbc.com","reuters.com","apnews.com","dw.com","aljazeera.com"]
+        description: "Preferred sources for news-topic selection."
+    effect_contract:
+      two_turn_flow: true                  # Turn 1: ask; Turn 2: analyze & feedback
+      ask_in_target_language: true
+      require_b1_plus: true
+      estimate_cefr: true                  # A1..C2 estimation from learner's reply
+      adapt_feedback_to_level: true        # feedback phrased at learner level + nudge
+      step_by_step_feedback: true
+      maintain_feedback_order: true
+      use_web_for_news: true               # when topic_mode='news', browse with recency filter
+      cite_news_briefly: true              # include source + date in 1 line when news is used
+      avoid_hidden_chain_of_thought: true
+    structure_spec:
+      phases:
+        - name: "Question"
+          fields:
+            - key: "prompt_target_language"
+              description: "A clear, B1+ suitable question in the target language."
+            - key: "instructions"
+              description: "Ask for one–two paragraphs (or free), and remind the learner of the feedback process."
+            - key: "(optional) news_context_one_liner"
+              description: "If topic_mode='news': 1 line with outlet + date."
+        - name: "Feedback"               # emitted on the follow-up turn after the learner replies
+          fields:
+            - key: "CEFR_estimate"
+              description: "Detected level with 1–2 reasons."
+            - key: "grammar"
+            - key: "word_choice"
+            - key: "idioms_expressions"
+            - key: "better_alternatives"
+            - key: "summary"
+            - key: "follow_up_question"
+              description: "A slightly harder follow-up question in the target language."
+    ordering:
+      run_after: ["method","structure","verification"]
+      run_before: ["tone","output_format","user_confirmation"]
+    compatibility:
+      conflicts_with: []
+    failure_behavior: "warn_and_continue"
+    examples:
+      - input: "@@LangCoach(English, news)"
+        output_sketch: |
+          Question: (in English) A B1/B2-friendly prompt tied to a recent BBC/Reuters story (with a one-line source + date). Request 1–2 paragraphs.
+          After learner answers → Feedback: CEFR estimate (e.g., B1), then grammar → word choice → idioms → better alternatives → summary. Slightly harder follow-up question at B1.5.
+      - input: "@@LangCoach(Italian, domain)"
+        output_sketch: |
+          Question: (in Italian) Ask about a physics topic suitable for B2.
+          After learner answers → Feedback sections at B2.5, then a follow-up question in Italian.
