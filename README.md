@@ -5,9 +5,12 @@
 
 # Activate Decorators
 
-  **Quick Start**
+  *Quick Start*
+
+  ***Load Decorators***
  
-  1) Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
+  Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
+  
      ```
      Read ChatGPTdecorators.yml as instructions
      ```
@@ -19,13 +22,14 @@
      ```
      (ChatGPT is fairly flexible about parsing; this is typically enough.)
  
-  2) Verify:
+  ***Verify Setup***
+   Verify using:
      ```
      @@Help
      ```
      You should see a meta header (author, version, GitHub) and the list of decorators.
  
-  3) Use decorators:
+  ***Use decorators***
      ```
      @@chat @@Tone(technical) @@StepByStep
      Explain neutrino oscillations for a graduate audience.
