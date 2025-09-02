@@ -246,3 +246,18 @@ By default, it produces runnable code with tests and safe defaults.
 @@CodeGen(mode=scaffold, language=python, targets=['library','cli'])
 Build an 'analysis' package with unit tests and CI.
 ```
+
+
+## LangCoach
+The `LangCoach` decorator is designed for language learning.  
+It asks a simple question in the target language, and the learner replies in either the target or their native language (depending on level).  
+This encourages active practice and self-expression.
+
+**Usage examples**
+
+```markdown
+@@LangCoach(English)
+Do you think children should go to school?
+
+@@LangCoach(German, news)
+Was denkst du über die heutige Schlagzeile?
