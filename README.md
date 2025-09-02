@@ -257,7 +257,23 @@ This encourages active practice and self-expression.
 
 ```markdown
 @@LangCoach(English)
-Do you think children should go to school?
+```
 
+Here we go:
+
+⸻
+
+Question (in English):
+Do you think it is more important to save money for the future, or to spend it now to enjoy life? Why?
+
+Instructions:
+Please write about one paragraph (or more if you wish) in English. After your reply, I will give you detailed feedback on grammar, word choice, expressions, and overall clarity, and then ask you a follow-up question.
+
+
+```markdown
 @@LangCoach(German, news)
-Was denkst du über die heutige Schlagzeile?
+```
+Frage (auf Deutsch):
+Was ist für dich wichtiger: mehr Geld zu verdienen oder mehr Freizeit zu haben? Warum?
+
+👉 Bitte antworte in Deutsch mit ungefähr einem Absatz (oder zwei, wenn du möchtest). Danach gebe ich dir Feedback zu Grammatik, Wortwahl, Redewendungen und Vorschläge für bessere Alternativen – plus eine kurze Zusammenfassung und eine Anschlussfrage.
