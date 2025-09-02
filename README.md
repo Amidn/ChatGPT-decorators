@@ -5,46 +5,46 @@
 
 # Activate Decorators
 
-> **Quick Start**
->
-> 1) Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
->    ```
->    Read ChatGPTdecorators.yml as instructions
->    ```
->    
->    OR
->    
->    ```
->    Read, update and remember instructions based on ChatGPT decorators.yml file.
->    ```
->    (ChatGPT is fairly flexible about parsing; this is typically enough.)
->
-> 2) Verify:
->    ```
->    @@Help
->    ```
->    You should see a meta header (author, version, GitHub) and the list of decorators.
->
-> 3) Use decorators:
->    ```
->    @@chat @@Tone(technical) @@StepByStep
->    Explain neutrino oscillations for a graduate audience.
->    ```
->    ```
->    @@message @@OutputFormat(json)
->    Summarize the following text in one JSON object with keys: tl;dr, key_points.
->    ```
->
-> 4) **Isolated / non-member projects** (Files + Instructions):
->    - Upload **ChatGPTdecorators.yml** to Files.
->    - In the Instructions box add:
->      ```
->      Read ChatGPTdecorators.yml as instructions
->      ```
->    - Test with `@@Help`.
->
-> 5) **Stay up to date**: always check the latest version  
->    GitHub (latest): https://github.com/Amidn/ChatGPT-decorators
+  **Quick Start**
+ 
+  1) Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
+     ```
+     Read ChatGPTdecorators.yml as instructions
+     ```
+     
+     OR
+     
+     ```
+     Read, update and remember instructions based on ChatGPT decorators.yml file.
+     ```
+     (ChatGPT is fairly flexible about parsing; this is typically enough.)
+ 
+  2) Verify:
+     ```
+     @@Help
+     ```
+     You should see a meta header (author, version, GitHub) and the list of decorators.
+ 
+  3) Use decorators:
+     ```
+     @@chat @@Tone(technical) @@StepByStep
+     Explain neutrino oscillations for a graduate audience.
+     ```
+     ```
+     @@message @@OutputFormat(json)
+     Summarize the following text in one JSON object with keys: tl;dr, key_points.
+     ```
+ 
+  4) **Isolated / non-member projects** (Files + Instructions):
+     - Upload **ChatGPTdecorators.yml** to Files.
+     - In the Instructions box add:
+       ```
+       Read ChatGPTdecorators.yml as instructions
+       ```
+     - Test with `@@Help`.
+ 
+  5) **Stay up to date**: always check the latest version  
+     GitHub (latest): https://github.com/Amidn/ChatGPT-decorators
 
 ---
 
