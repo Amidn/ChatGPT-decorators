@@ -5,12 +5,12 @@
 
 # Activate Decorators
 
-  *Quick Start*
+  **Quick Start**
 
   ***Load Decorators***
  
   Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
-  
+
      ```
      Read ChatGPTdecorators.yml as instructions
      ```
@@ -23,6 +23,7 @@
      (ChatGPT is fairly flexible about parsing; this is typically enough.)
  
   ***Verify Setup***
+
    Verify using:
      ```
      @@Help
