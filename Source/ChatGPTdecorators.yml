@@ -1076,7 +1076,7 @@ decorators:
   # daily life decorator 
   # ---------------------------------
   - name: "@@MedProof"
-    aliases: ["@@MedTemplate", "@@MedBoxes"]
+    aliases: ["MedCheck", "@@MedBoxes"]
     category: "utility"
     description: "Emit a pre-formatted MedProof template with a bold disclaimer and three bold-separated sections (evidence, caveats, conclusion) using boxed placeholders. Mirrors MedProof source restrictions."
     trigger_pattern: '^@@MedProofTemplate\\b'
