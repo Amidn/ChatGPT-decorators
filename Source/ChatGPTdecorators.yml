@@ -1079,7 +1079,7 @@ decorators:
     aliases: ["MedCheck", "@@MedBoxes"]
     category: "utility"
     description: "Emit a pre-formatted MedProof template with a bold disclaimer and three bold-separated sections (evidence, caveats, conclusion) using boxed placeholders. Mirrors MedProof source restrictions."
-    trigger_pattern: '^@@MedProofTemplate\\b'
+    trigger_pattern: '^@@MedProof\\b'
     scope_rule: "inherits"
 
     # NOTE: This is a template/formatting tool. It does not *have* to browse,
