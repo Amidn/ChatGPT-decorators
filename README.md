@@ -16,18 +16,16 @@
 
   ### Load Decorators
  
-  Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
+```markdown
+Read ChatGPTdecorators.yml as instructions
+```
 
-    ```markdown
-    Read ChatGPTdecorators.yml as instructions
-    ```
-     
-     OR
-     
-    ```markdown
-    Read, update and remember instructions based on ChatGPT decorators.yml file.
-    ```
-     (ChatGPT is fairly flexible about parsing; this is typically enough.)
+**OR**
+
+```markdown
+Read, update and remember instructions based on ChatGPT decorators.yml file.
+```
+(ChatGPT is fairly flexible about parsing; this is typically enough.)
  
   ### Verify Setup 
 
@@ -354,5 +352,3 @@ Frage (auf Deutsch):
 Was ist für dich wichtiger: mehr Geld zu verdienen oder mehr Freizeit zu haben? Warum?
 
 👉 Bitte antworte in Deutsch mit ungefähr einem Absatz (oder zwei, wenn du möchtest). Danach gebe ich dir Feedback zu Grammatik, Wortwahl, Redewendungen und Vorschläge für bessere Alternativen – plus eine kurze Zusammenfassung und eine Anschlussfrage.
-
-</file>
