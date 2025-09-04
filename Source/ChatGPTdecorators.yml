@@ -1079,15 +1079,14 @@ decorators:
   # ---------------------------------
   # daily life decorator 
   # ---------------------------------
-
     
   - name: "@@MedProof"
     category: "verification"
     aliases: ["@@MedFacts", "@@ClinCheck", "@@MedCheck"]
     description: >
-      Searches clinically credible sources for medical questions, summarizes
-      evidence quality, flags misinformation, and gives practical conclusions
-      with clear disclaimers. Not medical advice.
+      Strict, evidence-first medical check: searches only peer-reviewed and official clinical sources,
+      summarizes evidence quality and effect size, flags misinformation, and gives a cautious conclusion.
+      Always prints a bold disclaimer first. Not medical advice.
     trigger_pattern: "^@@MedProof(?:\\(([^)]*)\\))?\\b"
     scope_rule: "standalone"
     parameters:
@@ -1101,7 +1100,7 @@ decorators:
         required: false
       - name: "min_evidence_grade"
         type: enum
-        allowed: ["A", "B", "C"]
+        allowed: ["A", "B", "C"]    # A=SR/MA/guideline; B=RCT; C=observational/consensus
         default: "B"
         required: false
       - name: "include_rcts_only"
@@ -1120,32 +1119,128 @@ decorators:
         type: boolean
         default: true
         required: false
+
     effect_contract:
       always_print_disclaimer: true
+      disclaimer_position: "top"
       disclaimer_text: |
-        **This summary is for information only, not medical advice. Always consult a qualified clinician.**
-        **The internet often contains misleading or promotional claims — interpret cautiously.**
+        **Info only — not medical advice. Always consult a qualified clinician.**
+        **Online health claims can be misleading or promotional — use caution.**
+
+      # Section layout with bold titles and bold separators
       section_structure:
-        - header: "**Evidence-based Findings**"
-          start_separator: "---"
-          end_separator: "---"
-        - header: "**Caveats & Fake Claims**"
-          start_separator: "====== START CAVEATS ======"
-          end_separator: "====== END CAVEATS ======"
-        - header: "**Conclusion & Practical Notes**"
-          start_separator: "---"
-          end_separator: "---"
+        - header: "**Clinically Proven Findings**"
+          start_separator: "**━━━━━━━━━━━━━━━━━━━━━━━━**"
+          end_separator:   "**━━━━━━━━━━━━━━━━━━━━━━━━**"
+        - header: "**CAVEAT — Fake Claims & Not-Proven Information**"
+          start_separator: "**━━━━━━━━━━━━━━━━━━━━━━━━**"
+          end_separator:   "**━━━━━━━━━━━━━━━━━━━━━━━━**"
+        - header: "**Conclusion**"
+          start_separator: "**━━━━━━━━━━━━━━━━━━━━━━━━**"
+          end_separator:   "**━━━━━━━━━━━━━━━━━━━━━━━━**"
       enforce_order: true
-      source_whitelist: ["Cochrane", "WHO", "NICE", "EMA", "FDA", "NIH", "CDC", "PubMed"]
-      reject_low_cred_sources: true
-      evidence_grading: true
-      quantify_effect: true
+
+      # Strict source controls (fail-closed)
+      whitelist_only_mode: true
+      forbid_unknown_domains: true
+      require_peer_reviewed_journal: true
+      reject_preprints: true
+      require_pubmed_id: true   # except regulator label/guideline/advisory
+
+      allowed_source_types:
+        - systematic_review
+        - meta_analysis
+        - randomized_controlled_trial
+        - evidence_based_guideline
+        - drug_label
+        - safety_advisory
+
+      allowed_domains:
+        - "pubmed.ncbi.nlm.nih.gov"
+        - "clinicaltrials.gov"
+        - "cochranelibrary.com"
+        - "who.int"
+        - "nice.org.uk"
+        - "ema.europa.eu"
+        - "fda.gov"
+        - "cdc.gov"
+        - "nih.gov"
+        - "jamanetwork.com"
+        - "bmj.com"
+        - "thelancet.com"
+        - "nejm.org"
+        - "nature.com"
+        - "cell.com"
+        - "sciencedirect.com"
+        - "link.springer.com"
+        - "springer.com"
+        - "wiley.com"
+        - "tandfonline.com"
+        - "academic.oup.com"
+        - "oup.com"
+        - "cambridge.org"
+        - "sagepub.com"
+        - "karger.com"
+        - "frontiersin.org"
+        - "aacrjournals.org"
+        - "ashpublications.org"
+        - "esmo.org"
+        - "escardio.org"
+        - "plos.org"
+
+      forbidden_domains:
+        - "*.instagram.com"
+        - "*.tiktok.com"
+        - "*.facebook.com"
+        - "*.x.com"
+        - "*.twitter.com"
+        - "*.reddit.com"
+        - "*.youtube.com"
+        - "*.substack.com"
+        - "*.medium.com"
+        - "*.wordpress.com"
+        - "*.blogspot.com"
+        - "*.quora.com"
+        - "*.pinterest.*"
+        - "*.weebly.com"
+        - "*.wixsite.com"
+        - "arxiv.org"
+        - "medrxiv.org"
+        - "biorxiv.org"
+        - "researchgate.net"
+
+      web_search_policy:
+        must_browse: true
+        restrict_to_allowed_domains: true
+        disallow_image_query: true
+        disallow_product_query: true
+
+      # Caveat section: list only widely believed claims that are refuted/unsupported by the evidence section
+      caveat_policy:
+        max_items: 5
+        find_myths_from_allowed_domains_only: true   # use WHO/CDC/NICE “myths” pages etc.
+        crosscheck_against_evidence_section: true
+        format_each:
+          - "Claim:"
+          - "Evidence check (peer-reviewed/official):"
+          - "Status: Not proven / Refuted"
+
+      # Evidence reporting rules
+      evidence_grading: true            # A=guideline/SR/MA; B=RCT; C=observational/consensus
+      quantify_effect: true             # ARR/RRR, NNT/NNH if available
+      external_validity_commentary: true
       list_myths: true
       list_contraindications: true
       stop_if_no_evidence: true
+      citation_policy:
+        include_dates: true
+        include_PMID_or_DOI: true
+        max_sources: 8
+
     ordering:
       run_after: ["@@Reasoning"]
       run_before: ["@@Tone", "@@OutputFormat"]
+
     structure_spec:
       type: "evidence_summary"
       target: "entire_response"
