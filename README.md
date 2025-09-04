@@ -3,7 +3,7 @@
   - [Quick Start](#quick-start) — Load Decorators, Verify Setup, Use Decorators, ChatGPT Plus Project, Stay Up to Date
 - [Decorators Overview](#decorators-overview)
   - [Controller decorators](#controller-decorators) — chat, message, clear, Help, InProcess
-  - [Verification decorators](#verification-decorators) — FactCheck, CiteSources, CodeCheck
+  - [Verification decorators](#verification-decorators) — FactCheck, CiteSources, CodeCheck, MedProof
   - [Structure decorators](#structure-decorators) — Polish, StepByStep
   - [Method decorators](#method-decorators) — Reasoning, Assessment, Synthesize, CodeGen
   - [Error-handling decorators](#error-handling-decorators) — RiskReport
@@ -138,7 +138,49 @@ import numpy as np
 np.arange(5).shape()
 ```
 
+### MedProof
+The `MedProof` decorator (aliases: `@@MedFacts`, `@@ClinCheck`, `@@MedCheck`) performs evidence-focused health queries using only clinically credible sources. It **always** prints a bold disclaimer at the top, then outputs three clearly separated sections with horizontal rules.
 
+**What it does**
+- Searches reputable medical sources (e.g., Cochrane, WHO, NICE, FDA/EMA labels, NIH/CDC, PubMed-indexed RCTs and systematic reviews).
+- Prioritizes high-quality evidence (guidelines/meta-analyses/RCTs), with optional filters for region, recency, and minimum evidence grade.
+- Quantifies real-world impact when available (ARR/RRR, NNT/NNH), and states external-validity limits (e.g., lab vs. typical use).
+- Flags hype, advertising claims, and common myths in a dedicated caveat section.
+- Lists key contraindications/red flags and reminds the reader to seek professional care.
+- Ends with a concise, practical conclusion.
+
+**Always-printed disclaimer (appears first)**
+**This summary is for information only, not medical advice. Always consult a clinician.**  
+**The internet has misleading claims; use caution.**
+
+**Output format (three sections separated by lines)**
+1) **Evidence-based Findings**  
+   ---
+2) **Caveats & Fake Claims**  
+   ---
+3) **Conclusion & Practical Notes**  
+   ---
+
+**Usage examples**
+
+```markdown
+@@MedProof
+Is caffeine shampoo effective for androgenic alopecia?
+```
+
+```markdown
+@@MedProof(region=EU, recency_years=5, min_evidence_grade=A)
+Do weight-loss "metabolism patches" work?
+```
+
+**Parameters (optional)**
+- `region`: `auto|US|EU|UK|WHO` (prefer guidelines/evidence from that region)
+- `recency_years`: integer (default `7`)
+- `min_evidence_grade`: `A|B|C` (default `B`; A=guidelines/systematic reviews, B=RCTs, C=observational/consensus)
+- `include_rcts_only`: boolean (default `false`)
+- `report_effect_size`: boolean (default `true`)
+- `fake_news_scan`: boolean (default `true`)
+- `contraindications`: boolean (default `true`)
 
 ## Structure decorators
 
@@ -313,3 +355,4 @@ Was ist für dich wichtiger: mehr Geld zu verdienen oder mehr Freizeit zu haben?
 
 👉 Bitte antworte in Deutsch mit ungefähr einem Absatz (oder zwei, wenn du möchtest). Danach gebe ich dir Feedback zu Grammatik, Wortwahl, Redewendungen und Vorschläge für bessere Alternativen – plus eine kurze Zusammenfassung und eine Anschlussfrage.
 
+</file>

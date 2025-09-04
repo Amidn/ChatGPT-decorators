@@ -1069,3 +1069,79 @@ decorators:
         output_sketch: |
           Question: (in Italian) Ask about a physics topic suitable for B2.
           After learner answers → Feedback sections at B2.5, then a follow-up question in Italian.
+
+
+
+
+
+
+
+  # ---------------------------------
+  # daily life decorator 
+  # ---------------------------------
+
+
+  - name: "@@MedProof"
+    category: "verification"
+    aliases: ["@@MedFacts", "@@ClinCheck", "@@MedCheck"]
+    description: >
+      Searches clinically credible sources for medical questions, summarizes
+      evidence quality, flags misinformation, and gives practical conclusions
+      with clear disclaimers. Not medical advice.
+    trigger_pattern: "^@@MedProof(?:\\(([^)]*)\\))?\\b"
+    scope_rule: "standalone"
+    parameters:
+      - name: "region"
+        type: enum
+        allowed: ["auto", "US", "EU", "UK", "WHO"]
+        required: false
+      - name: "recency_years"
+        type: integer
+        default: 7
+        required: false
+      - name: "min_evidence_grade"
+        type: enum
+        allowed: ["A", "B", "C"]
+        default: "B"
+        required: false
+      - name: "include_rcts_only"
+        type: boolean
+        default: false
+        required: false
+      - name: "report_effect_size"
+        type: boolean
+        default: true
+        required: false
+      - name: "fake_news_scan"
+        type: boolean
+        default: true
+        required: false
+      - name: "contraindications"
+        type: boolean
+        default: true
+        required: false
+    effect_contract:
+      always_print_disclaimer: true
+      disclaimer_text: |
+        **This summary is for information only, not medical advice. Always consult a clinician.**
+        **The internet has misleading claims; use caution.**
+      output_sections:
+        - title: "Evidence-based Findings"
+          separator: "---"
+        - title: "Caveats & Fake Claims"
+          separator: "---"
+        - title: "Conclusion & Practical Notes"
+          separator: "---"
+      source_whitelist: ["Cochrane", "WHO", "NICE", "EMA", "FDA", "NIH", "CDC", "PubMed"]
+      reject_low_cred_sources: true
+      evidence_grading: true
+      quantify_effect: true
+      list_myths: true
+      list_contraindications: true
+      stop_if_no_evidence: true
+    ordering:
+      run_after: ["@@Reasoning"]
+      run_before: ["@@Tone", "@@OutputFormat"]
+    structure_spec:
+      type: "evidence_summary"
+      target: "entire_response"
