@@ -1079,48 +1079,19 @@ decorators:
   # ---------------------------------
   # daily life decorator 
   # ---------------------------------
-    
   - name: "@@MedProof"
-    category: "verification"
-    aliases: ["@@MedFacts", "@@ClinCheck", "@@MedCheck"]
-    description: >
-      Strict, evidence-first medical check: searches only peer-reviewed and official clinical sources,
-      summarizes evidence quality and effect size, flags misinformation, and gives a cautious conclusion.
-      Always prints a bold disclaimer first. Not medical advice.
-    trigger_pattern: "^@@MedProof(?:\\(([^)]*)\\))?\\b"
-    scope_rule: "standalone"
-    parameters:
-      - name: "region"
-        type: enum
-        allowed: ["auto", "US", "EU", "UK", "WHO"]
-        required: false
-      - name: "recency_years"
-        type: integer
-        default: 7
-        required: false
-      - name: "min_evidence_grade"
-        type: enum
-        allowed: ["A", "B", "C"]    # A=SR/MA/guideline; B=RCT; C=observational/consensus
-        default: "B"
-        required: false
-      - name: "include_rcts_only"
-        type: boolean
-        default: false
-        required: false
-      - name: "report_effect_size"
-        type: boolean
-        default: true
-        required: false
-      - name: "fake_news_scan"
-        type: boolean
-        default: true
-        required: false
-      - name: "contraindications"
-        type: boolean
-        default: true
-        required: false
+    aliases: ["@@MedTemplate", "@@MedBoxes"]
+    category: "utility"
+    description: "Emit a pre-formatted MedProof template with a bold disclaimer and three bold-separated sections (evidence, caveats, conclusion) using boxed placeholders. Mirrors MedProof source restrictions."
+    trigger_pattern: '^@@MedProofTemplate\\b'
+    scope_rule: "inherits"
 
+    # NOTE: This is a template/formatting tool. It does not *have* to browse,
+    # but if your runtime fetches example stubs, enforce the same strict policy as @@MedProof.
     effect_contract:
+      emits_template_only: true
+
+      # Disclaimer must be first
       always_print_disclaimer: true
       disclaimer_position: "top"
       disclaimer_text: |
@@ -1140,7 +1111,7 @@ decorators:
           end_separator:   "**━━━━━━━━━━━━━━━━━━━━━━━━**"
       enforce_order: true
 
-      # Strict source controls (fail-closed)
+      # —— Source controls copied from @@MedProof (strict allowlist; fail-closed) ——
       whitelist_only_mode: true
       forbid_unknown_domains: true
       require_peer_reviewed_journal: true
@@ -1210,37 +1181,87 @@ decorators:
         - "researchgate.net"
 
       web_search_policy:
-        must_browse: true
-        restrict_to_allowed_domains: true
+        must_browse: false                    # template itself doesn’t need browsing
+        restrict_to_allowed_domains: true     # if any lookup occurs, enforce allowlist
         disallow_image_query: true
         disallow_product_query: true
 
-      # Caveat section: list only widely believed claims that are refuted/unsupported by the evidence section
+      # Optional: if your engine populates common myths, only from official myth pages
       caveat_policy:
         max_items: 5
-        find_myths_from_allowed_domains_only: true   # use WHO/CDC/NICE “myths” pages etc.
+        find_myths_from_allowed_domains_only: true
         crosscheck_against_evidence_section: true
         format_each:
           - "Claim:"
           - "Evidence check (peer-reviewed/official):"
           - "Status: Not proven / Refuted"
 
-      # Evidence reporting rules
-      evidence_grading: true            # A=guideline/SR/MA; B=RCT; C=observational/consensus
-      quantify_effect: true             # ARR/RRR, NNT/NNH if available
-      external_validity_commentary: true
-      list_myths: true
-      list_contraindications: true
-      stop_if_no_evidence: true
-      citation_policy:
-        include_dates: true
-        include_PMID_or_DOI: true
-        max_sources: 8
+      # Boxed placeholders for each section
+      template_boxes:
+        clinically_proven: |
+          > **Question/Topic:** …
+          > **Top Evidence (PMID/DOI + year):** …
+          > **Study Type & Quality (A/B/C):** …
+          > **Population/Setting:** …
+          > **Effect Size (ARR/RRR, NNT/NNH, timeframe):** …
+          > **Guideline Stance (WHO/NICE/…):** …
+          > **External Validity / Practicality:** …
 
-    ordering:
-      run_after: ["@@Reasoning"]
-      run_before: ["@@Tone", "@@OutputFormat"]
+        caveats: |
+          > **Claim 1:** …
+          > **Evidence check (peer-reviewed/official):** …
+          > **Status:** Not proven / Refuted
+          >
+          > **Claim 2:** …
+          > **Evidence check:** …
+          > **Status:** …
+          >
+          > *(List up to 5 major myths)*
+
+        conclusion: |
+          > **Verdict (1 line):** …
+          > **Practical Notes (how/if to use):** …
+          > **Contraindications / Red Flags:** …
+          > **Confidence:** Low / Medium / High
 
     structure_spec:
-      type: "evidence_summary"
-      target: "entire_response"
+      type: "template_render"
+      render_order:
+        - "disclaimer"
+        - "Clinically Proven Findings"
+        - "CAVEAT — Fake Claims & Not-Proven Information"
+        - "Conclusion"
+      bind_boxes: true
+
+    examples:
+      - input: "@@MedProofTemplate"
+        output_sketch: |
+          **Info only — not medical advice. Always consult a qualified clinician.**
+          **Online health claims can be misleading or promotional — use caution.**
+
+          **━━━━━━━━━━━━━━━━━━━━━━━━**
+          **Clinically Proven Findings**
+          > **Question/Topic:** …
+          > **Top Evidence (PMID/DOI + year):** …
+          > **Study Type & Quality (A/B/C):** …
+          > **Population/Setting:** …
+          > **Effect Size (ARR/RRR, NNT/NNH, timeframe):** …
+          > **Guideline Stance (WHO/NICE/…):** …
+          > **External Validity / Practicality:** …
+
+          **━━━━━━━━━━━━━━━━━━━━━━━━**
+          **CAVEAT — Fake Claims & Not-Proven Information**
+          > **Claim 1:** …
+          > **Evidence check (peer-reviewed/official):** …
+          > **Status:** Not proven / Refuted
+          >
+          > **Claim 2:** …
+          > **Evidence check:** …
+          > **Status:** …
+
+          **━━━━━━━━━━━━━━━━━━━━━━━━**
+          **Conclusion**
+          > **Verdict (1 line):** …
+          > **Practical Notes (how/if to use):** …
+          > **Contraindications / Red Flags:** …
+          > **Confidence:** …
