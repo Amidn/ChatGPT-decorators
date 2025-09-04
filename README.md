@@ -18,15 +18,15 @@
  
   Upload **ChatGPTdecorators.yml** (located in the Source folder) to the conversation and send:
 
-     ```markdown
-     Read ChatGPTdecorators.yml as instructions
-     ```
+    ```markdown
+    Read ChatGPTdecorators.yml as instructions
+    ```
      
      OR
      
-     ```markdown
-     Read, update and remember instructions based on ChatGPT decorators.yml file.
-     ```
+    ```markdown
+    Read, update and remember instructions based on ChatGPT decorators.yml file.
+    ```
      (ChatGPT is fairly flexible about parsing; this is typically enough.)
  
   ### Verify Setup 
