@@ -1080,7 +1080,7 @@ decorators:
   # daily life decorator 
   # ---------------------------------
 
-
+    
   - name: "@@MedProof"
     category: "verification"
     aliases: ["@@MedFacts", "@@ClinCheck", "@@MedCheck"]
@@ -1123,15 +1123,19 @@ decorators:
     effect_contract:
       always_print_disclaimer: true
       disclaimer_text: |
-        **This summary is for information only, not medical advice. Always consult a clinician.**
-        **The internet has misleading claims; use caution.**
-      output_sections:
-        - title: "Evidence-based Findings"
-          separator: "---"
-        - title: "Caveats & Fake Claims"
-          separator: "---"
-        - title: "Conclusion & Practical Notes"
-          separator: "---"
+        **This summary is for information only, not medical advice. Always consult a qualified clinician.**
+        **The internet often contains misleading or promotional claims — interpret cautiously.**
+      section_structure:
+        - header: "**Evidence-based Findings**"
+          start_separator: "---"
+          end_separator: "---"
+        - header: "**Caveats & Fake Claims**"
+          start_separator: "====== START CAVEATS ======"
+          end_separator: "====== END CAVEATS ======"
+        - header: "**Conclusion & Practical Notes**"
+          start_separator: "---"
+          end_separator: "---"
+      enforce_order: true
       source_whitelist: ["Cochrane", "WHO", "NICE", "EMA", "FDA", "NIH", "CDC", "PubMed"]
       reject_low_cred_sources: true
       evidence_grading: true
